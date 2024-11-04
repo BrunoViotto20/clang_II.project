@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef struct Product Product;
 typedef struct PaymentMethod PaymentMethod;
@@ -8,6 +9,7 @@ struct Product
 {
     char name[32];
     double price;
+    bool adult;
 };
 
 struct PaymentMethod
@@ -16,79 +18,158 @@ struct PaymentMethod
     double fee;
 };
 
-Product products_menu(const Product *products, int length);
-PaymentMethod payment_menu(const PaymentMethod *paymentMethods, int length);
+void clear_console();
+void wait_key_press();
+int get_age();
+Product products_menu(const Product *products, int length, int age);
+PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length);
 
 int main(void)
 {
     const Product products[] = {
-        {"Cachorro Quente", 12},
-        {"X-Salada", 15.5},
-        {"X-Bacon", 18},
-        {"Torrada Simples", 8},
-        {"Refrigerante", 4.5},
-        {"Cerveja Brahma", 6},
-        {"Cigarro Malboro", 6}};
-    const int productsLength = sizeof(products) / sizeof(Product);
+        {"Cachorro Quente", 12, false},
+        {"X-Salada", 15.5, false},
+        {"X-Bacon", 18, false},
+        {"Torrada Simples", 8, false},
+        {"Refrigerante", 4.5, false},
+        {"Cerveja Brahma", 6, true},
+        {"Cigarro Malboro", 6, true}};
+    const int products_length = sizeof(products) / sizeof(Product);
 
-    const PaymentMethod paymentMethods[] = {
+    const PaymentMethod payment_methods[] = {
         {"Crédito", .02},
         {"Débito", .02},
         {"Dinheiro", 0}};
-    const int paymentMethodsLength = sizeof(paymentMethods) / sizeof(Product);
+    const int payment_methods_length = sizeof(payment_methods) / sizeof(PaymentMethod);
 
-    Product product = products_menu(products, productsLength);
+    int age = get_age();
+
+    Product product = products_menu(products, products_length, age);
 
     printf("Digite a quantidade do item: ");
     int amount;
     scanf("%d", &amount);
 
-    PaymentMethod paymentMethod = payment_menu(paymentMethods, paymentMethodsLength);
+    PaymentMethod payment_method = payment_menu(payment_methods, payment_methods_length);
 
-    if (paymentMethod.fee != 0)
+    if (payment_method.fee != 0)
     {
-        printf("Taxa de %.1lf%%, sobre o valor da compra:\n", paymentMethod.fee * 100);
+        printf("Taxa de %.1lf%%, sobre o valor da compra:\n", payment_method.fee * 100);
     }
-    
+
     double total_price = amount * product.price;
-    double final_price = total_price * (1 + paymentMethod.fee);
+    double final_price = total_price * (1 + payment_method.fee);
     printf("O valor total é: R$%.2f\n", final_price);
 
     return 0;
 }
 
-Product products_menu(const Product *products, int length)
+void clear_console()
 {
-    printf("MENU DE PEDIDOS:\n\n");
-    for (int i = 0; i < length; i++)
-    {
-        Product product = products[i];
-        printf("[ %d ] %s R$%.2lf\n", i + 1, product.name, product.price);
-    }
-    printf("\n");
-    printf("Digite a opção do produto: ");
-    int option;
-    scanf("%d", &option);
-
-    return products[option - 1];
+#if _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
 }
 
-PaymentMethod payment_menu(const PaymentMethod *paymentMethods, int length)
+void wait_key_press()
 {
-    printf("MENU DE PAGAMENTO :\n\n");
-    for (int i = 0; i < length; i++)
+    printf("Press any key to Continue\n");
+    getchar();
+    getchar();
+}
+
+int get_age()
+{
+    while (true)
     {
-        PaymentMethod payment_method = paymentMethods[i];
-        printf("[ %d ] %s", i + 1, payment_method.name);
-
-        if (payment_method.fee != 0) {
-            printf(" (+%.1lf%%)\n", payment_method.fee * 100);
+        int age;
+        printf("Digite a sua idade: ");
+        scanf("%d", &age);
+        if (age <= 0)
+        {
+            clear_console();
+            printf("Idade inválida! Tente novamente\n\n");
+            wait_key_press();
+            clear_console();
+            continue;
         }
-    }
-    printf("\n");
-    printf("Digite a opção da forma de pagamento: ");
-    int option;
-    scanf("%d", &option);
 
-    return paymentMethods[option - 1];
+        return age;
+    }
+}
+
+Product products_menu(const Product *products, int length, int age)
+{
+    while (true)
+    {
+        printf("MENU DE PEDIDOS:\n\n");
+        for (int i = 0; i < length; i++)
+        {
+            Product product = products[i];
+            printf("[ %d ] %s R$%.2lf\n", i + 1, product.name, product.price);
+        }
+        printf("\n");
+
+        int option;
+        printf("Selecione o produto: ");
+        scanf("%d", &option);
+
+        if (option <= 0 || option > length)
+        {
+            clear_console();
+            printf("Produto inválido! Tente novamente\n\n");
+            wait_key_press();
+            clear_console();
+            continue;
+        }
+
+        Product product = products[option - 1];
+
+        if (product.adult && age < 18)
+        {
+            clear_console();
+            printf("Venda proibida para menores de 18 anos!\n");
+            wait_key_press();
+            clear_console();
+            continue;
+        }
+
+        return product;
+    }
+}
+
+PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length)
+{
+    while (true)
+    {
+        printf("MENU DE PAGAMENTO:\n\n");
+        for (int i = 0; i < length; i++)
+        {
+            PaymentMethod payment_method = payment_methods[i];
+            printf("[ %d ] %s", i + 1, payment_method.name);
+
+            if (payment_method.fee != 0)
+            {
+                printf(" (+%.1lf%%)\n", payment_method.fee * 100);
+            }
+        }
+        printf("\n");
+
+        int option;
+        printf("Selecione a forma de pagamento: ");
+        scanf("%d", &option);
+
+        if (option <= 0 || option > length)
+        {
+            clear_console();
+            printf("Forma de pagamento inválida! Tente novamente\n\n");
+            wait_key_press();
+            clear_console();
+            continue;
+        }
+
+        return payment_methods[option - 1];
+    }
 }
