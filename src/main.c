@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int main_menu();
+int payment_menu();
+
 int main(void)
 {
     float mult;
@@ -12,17 +15,7 @@ int main(void)
     int idade;
     // float *p;
 
-    printf("MENU DE PEDIDOS:\n\n");
-    printf("1 - para Cachorro-quente R$ 12,00\n");
-    printf("2 - para X-salada R$ 15,50\n");
-    printf("3 - para X-bacon R$ 18,00\n");
-    printf("4 - para Torrada simples R$ 8,00\n");
-    printf("5 - para Refrigerante  R$ 4,50\n");
-    printf("6 - para Cerveja Brahma R$ 6,00\n");
-    printf("7 - para Cigarro Malboro R$ 6.00\n");
-    printf("\n");
-    printf("Digite a opção do produto: ");
-    scanf("%d", &opcao);
+    opcao = main_menu();
 
     switch (opcao)
     {
@@ -37,13 +30,7 @@ int main(void)
         mult = (qtd * 12.00);
         printf("O valor a pagar é: %.2f Reais\n", mult);
 
-        printf("MENU DE PAGAMENTO :\n\n");
-        printf("1 - para Cartão de Débito +2%%\n");
-        printf("2 - para Cartão de Credito +2%%\n");
-        printf("3 - para Dinheiro em Especie\n");
-        printf("\n");
-        printf("Digite a opção da forma de pagamento: ");
-        scanf("%d", &opcao2);
+        opcao2 = payment_menu();
 
         switch (opcao2)
         {
@@ -51,18 +38,18 @@ int main(void)
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 2:
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 3:
-            printf("O valor a pagar sera de : %.2f Reais", mult);
+            printf("O valor a pagar sera de : %.2f Reais\n", mult);
             break;
 
         default:
@@ -80,13 +67,7 @@ int main(void)
         mult = (qtd * 15.50);
         printf("O valor a pagar sera de : %.2f Reais\n\n", mult);
 
-        printf("MENU DE PAGAMENTO :\n\n");
-        printf("1 - para Cartão de Débito +2%%\n");
-        printf("2 - para Cartão de Credito +2%%\n");
-        printf("3 - para Dinheiro em Especie\n");
-        printf("\n");
-        printf("Digite a opção da forma de pagamento: ");
-        scanf("%d", &opcao2);
+        opcao2 = payment_menu();
 
         switch (opcao2)
         {
@@ -94,18 +75,18 @@ int main(void)
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 2:
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 3:
-            printf("O valor a pagar sera de : %.2f Reais", mult);
+            printf("O valor a pagar sera de : %.2f Reais\n", mult);
             break;
 
         default:
@@ -121,13 +102,7 @@ int main(void)
         mult = (qtd * 18.00);
         printf("O valor a pagar é: %.2f Reais\n\n", mult);
 
-        printf("MENU DE PAGAMENTO :\n\n");
-        printf("1 - para Cartão de Débito +2%%\n");
-        printf("2 - para Cartão de Credito +2%%\n");
-        printf("3 - para Dinheiro em Especie\n");
-        printf("\n");
-        printf("Digite a opção da forma de pagamento: ");
-        scanf("%d", &opcao2);
+        opcao2 = payment_menu();
 
         switch (opcao2)
         {
@@ -135,18 +110,18 @@ int main(void)
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 2:
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 3:
-            printf("O valor a pagar sera de : %.2f Reais", mult);
+            printf("O valor a pagar sera de : %.2f Reais\n", mult);
             break;
 
         default:
@@ -162,31 +137,26 @@ int main(void)
         mult = (qtd * 8.00);
         printf("O valor a pagar é: %.2f Reais\n\n", mult);
 
-        printf("MENU DE PAGAMENTO :\n\n");
-        printf("1 - para Cartão de Débito +2%%\n");
-        printf("2 - para Cartão de Credito +2%%\n");
-        printf("3 - para Dinheiro em Especie\n");
-        printf("\n");
-        printf("Digite a opção da forma de pagamento: ");
-        scanf("%d", &opcao2);
+        opcao2 = payment_menu();
+
         switch (opcao2)
         {
         case 1:
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 2:
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 3:
-            printf("O valor a pagar sera de : %.2f Reais", mult);
+            printf("O valor a pagar sera de : %.2f Reais\n", mult);
             break;
 
         default:
@@ -202,13 +172,7 @@ int main(void)
         mult = (qtd * 4.50);
         printf("O valor a pagar é: %.2f Reais\n\n", mult);
 
-        printf("MENU DE PAGAMENTO :\n\n");
-        printf("1 - para Cartão de Débito +2%%\n");
-        printf("2 - para Cartão de Credito +2%%\n");
-        printf("3 - para Dinheiro em Especie \n");
-        printf("\n");
-        printf("Digite a opção da forma de pagamento: ");
-        scanf("%d", &opcao2);
+        opcao2 = payment_menu();
 
         switch (opcao2)
         {
@@ -216,18 +180,18 @@ int main(void)
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 2:
             porcentagem = (mult * 2) / 100;
             soma = (porcentagem + mult);
             printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais", soma);
+            printf("O valor total é: %.2f Reais\n", soma);
             break;
 
         case 3:
-            printf("O valor a pagar sera de : %.2f Reais", mult);
+            printf("O valor a pagar sera de : %.2f Reais\n", mult);
             break;
 
         default:
@@ -248,13 +212,7 @@ int main(void)
             mult = (qtd * 6.00);
             printf("O valor a pagar é: %.2f Reais\n\n", mult);
 
-            printf("MENU DE PAGAMENTO :\n\n");
-            printf("1 - para Cartão de Débito +2%%\n");
-            printf("2 - para Cartão de Credito +2%%\n");
-            printf("3 - para Dinheiro em Especie \n");
-            printf("\n");
-            printf("Digite a opção da forma de pagamento: ");
-            scanf("%d", &opcao2);
+            opcao2 = payment_menu();
 
             switch (opcao2)
             {
@@ -262,18 +220,18 @@ int main(void)
                 porcentagem = (mult * 2) / 100;
                 soma = (porcentagem + mult);
                 printf("taxa de 2%%, sobre o valor da compra :\n");
-                printf("O valor total é: %.2f Reais", soma);
+                printf("O valor total é: %.2f Reais\n", soma);
                 break;
 
             case 2:
                 porcentagem = (mult * 2) / 100;
                 soma = (porcentagem + mult);
                 printf("taxa de 2%%, sobre o valor da compra :\n");
-                printf("O valor total é: %.2f Reais", soma);
+                printf("O valor total é: %.2f Reais\n", soma);
                 break;
 
             case 3:
-                printf("O valor a pagar sera de : %.2f Reais", mult);
+                printf("O valor a pagar sera de : %.2f Reais\n", mult);
                 break;
 
             default:
@@ -304,13 +262,7 @@ int main(void)
             mult = (qtd * 6.00);
             printf("O valor a pagar sera de : %.2f Reais\n\n", mult);
 
-            printf("MENU DE PAGAMENTO :\n\n");
-            printf("1 - para Cartão de Débito +2%%\n");
-            printf("2 - para Cartão de Credito +2%%\n");
-            printf("3 - para Dinheiro em Especie\n");
-            printf("\n");
-            printf("Digite a opção da forma de pagamento: ");
-            scanf("%d", &opcao2);
+            opcao2 = payment_menu();
 
             switch (opcao2)
             {
@@ -318,18 +270,18 @@ int main(void)
                 porcentagem = (mult * 2) / 100;
                 soma = (porcentagem + mult);
                 printf("taxa de 2%%, sobre o valor da compra :\n");
-                printf("O valor total é: %.2f Reais", soma);
+                printf("O valor total é: %.2f Reais\n", soma);
                 break;
 
             case 2:
                 porcentagem = (mult * 2) / 100;
                 soma = (porcentagem + mult);
                 printf("taxa de 2%%, sobre o valor da compra :\n");
-                printf("O valor total é: %.2f Reais", soma);
+                printf("O valor total é: %.2f Reais\n", soma);
                 break;
 
             case 3:
-                printf("O valor a pagar sera de : %.2f Reais", mult);
+                printf("O valor a pagar sera de : %.2f Reais\n", mult);
                 break;
 
             default:
@@ -354,4 +306,34 @@ int main(void)
     }
 
     return 0;
+}
+
+int main_menu() {
+    printf("MENU DE PEDIDOS:\n\n");
+    printf("1 - para Cachorro-quente R$ 12,00\n");
+    printf("2 - para X-salada R$ 15,50\n");
+    printf("3 - para X-bacon R$ 18,00\n");
+    printf("4 - para Torrada simples R$ 8,00\n");
+    printf("5 - para Refrigerante  R$ 4,50\n");
+    printf("6 - para Cerveja Brahma R$ 6,00\n");
+    printf("7 - para Cigarro Malboro R$ 6.00\n");
+    printf("\n");
+    printf("Digite a opção do produto: ");
+    int opcao;
+    scanf("%d", &opcao);
+
+    return opcao;
+}
+
+int payment_menu() {
+    printf("MENU DE PAGAMENTO :\n\n");
+    printf("1 - para Cartão de Débito +2%%\n");
+    printf("2 - para Cartão de Credito +2%%\n");
+    printf("3 - para Dinheiro em Especie\n");
+    printf("\n");
+    printf("Digite a opção da forma de pagamento: ");
+    int opcao;
+    scanf("%d", &opcao);
+
+    return opcao;
 }
