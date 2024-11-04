@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 typedef struct Produto Produto;
+typedef struct FormaPagamento FormaPagamento;
 
 struct Produto
 {
@@ -9,12 +10,18 @@ struct Produto
     double preco;
 };
 
+struct FormaPagamento
+{
+    char nome[32];
+    double custo;
+};
+
 int main_menu();
 int payment_menu();
 
 int main(void)
 {
-    Produto produtos[] = {
+    const Produto produtos[] = {
         {"Cachorro Quente", 12},
         {"X-Salada", 15.5},
         {"X-Bacon", 18},
@@ -23,44 +30,31 @@ int main(void)
         {"Cerveja Brahma", 6},
         {"Cigarro Malboro", 6}};
 
+    const FormaPagamento formasPagamento[] = {
+        {"Crédito", .02},
+        {"Débito", .02},
+        {"Dinheiro", 0}};
+
     int menu = main_menu();
 
     Produto produto = produtos[menu - 1];
 
-    printf("Digite a quantidade do item :");
+    printf("Digite a quantidade do item: ");
     int quantidade;
     scanf("%d", &quantidade);
 
     double preco_total = quantidade * produto.preco;
 
-    int pagamento = payment_menu();
+    int opcaoPagamento = payment_menu();
 
-    double porcentagem;
-    double soma;
-    switch (pagamento)
+    FormaPagamento formaPagamento = formasPagamento[opcaoPagamento - 1];
+
+    if (formaPagamento.custo != 0)
     {
-    case 1:
-        porcentagem = (preco_total * 2) / 100;
-        soma = (porcentagem + preco_total);
-        printf("taxa de 2%%, sobre o valor da compra :\n");
-        printf("O valor total é: %.2f Reais\n", soma);
-        break;
-
-    case 2:
-        porcentagem = (preco_total * 2) / 100;
-        soma = (porcentagem + preco_total);
-        printf("taxa de 2%%, sobre o valor da compra :\n");
-        printf("O valor total é: %.2f Reais\n", soma);
-        break;
-
-    case 3:
-        printf("O valor a pagar sera de : %.2f Reais\n", preco_total);
-        break;
-
-    default:
-        printf("Digite um codigo valido!");
-        break;
+        printf("Taxa de %.1lf%%, sobre o valor da compra:\n", formaPagamento.custo * 100);
     }
+    double preco_final = preco_total * (1 + formaPagamento.custo);
+    printf("O valor total é: R$%.2f\n", preco_final);
 
     return 0;
 }
