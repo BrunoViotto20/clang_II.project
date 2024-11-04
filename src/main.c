@@ -1,303 +1,60 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct Produto Produto;
+
+struct Produto
+{
+    char nome[32];
+    double preco;
+};
+
 int main_menu();
 int payment_menu();
 
 int main(void)
 {
-    float mult;
-    float qtd;
-    float porcentagem;
-    float soma;
-    int opcao;
-    int opcao2;
-    int idade;
-    // float *p;
+    Produto produtos[] = {
+        {"Cachorro Quente", 12},
+        {"X-Salada", 15.5},
+        {"X-Bacon", 18},
+        {"Torrada Simples", 8},
+        {"Refrigerante", 4.5},
+        {"Cerveja Brahma", 6},
+        {"Cigarro Malboro", 6}};
 
-    opcao = main_menu();
+    int menu = main_menu();
 
-    switch (opcao)
+    Produto produto = produtos[menu - 1];
+
+    printf("Digite a quantidade do item :");
+    int quantidade;
+    scanf("%d", &quantidade);
+
+    double preco_total = quantidade * produto.preco;
+
+    int pagamento = payment_menu();
+
+    double porcentagem;
+    double soma;
+    switch (pagamento)
     {
     case 1:
-        printf("Digite a quantidade do item :");
-        scanf("%f", &qtd);
-
-        // TODO (Bruno Viotto):
-        // Pecado nível master esse aqui
-        // p = (float *)malloc(qtd * sizeof(float));
-
-        mult = (qtd * 12.00);
-        printf("O valor a pagar é: %.2f Reais\n", mult);
-
-        opcao2 = payment_menu();
-
-        switch (opcao2)
-        {
-        case 1:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 2:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 3:
-            printf("O valor a pagar sera de : %.2f Reais\n", mult);
-            break;
-
-        default:
-            printf("Digite um codigo valido!");
-            break;
-        }
+        porcentagem = (preco_total * 2) / 100;
+        soma = (porcentagem + preco_total);
+        printf("taxa de 2%%, sobre o valor da compra :\n");
+        printf("O valor total é: %.2f Reais\n", soma);
         break;
 
     case 2:
-        printf("Digite a quantidade do item :");
-        scanf("%f", &qtd);
-
-        // p = (float *)malloc(qtd * sizeof(float));
-
-        mult = (qtd * 15.50);
-        printf("O valor a pagar sera de : %.2f Reais\n\n", mult);
-
-        opcao2 = payment_menu();
-
-        switch (opcao2)
-        {
-        case 1:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 2:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 3:
-            printf("O valor a pagar sera de : %.2f Reais\n", mult);
-            break;
-
-        default:
-            printf("Digite um codigo valido!");
-            break;
-        }
+        porcentagem = (preco_total * 2) / 100;
+        soma = (porcentagem + preco_total);
+        printf("taxa de 2%%, sobre o valor da compra :\n");
+        printf("O valor total é: %.2f Reais\n", soma);
         break;
 
     case 3:
-        printf("Digite a quantidade do item :");
-        scanf("%f", &qtd);
-        // p = (float *)malloc(qtd * sizeof(float));
-        mult = (qtd * 18.00);
-        printf("O valor a pagar é: %.2f Reais\n\n", mult);
-
-        opcao2 = payment_menu();
-
-        switch (opcao2)
-        {
-        case 1:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 2:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 3:
-            printf("O valor a pagar sera de : %.2f Reais\n", mult);
-            break;
-
-        default:
-            printf("Digite um codigo valido!");
-            break;
-        }
-        break;
-
-    case 4:
-        printf("Digite a quantidade do item :");
-        scanf("%f", &qtd);
-        // p = (float *)malloc(qtd * sizeof(float));
-        mult = (qtd * 8.00);
-        printf("O valor a pagar é: %.2f Reais\n\n", mult);
-
-        opcao2 = payment_menu();
-
-        switch (opcao2)
-        {
-        case 1:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 2:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 3:
-            printf("O valor a pagar sera de : %.2f Reais\n", mult);
-            break;
-
-        default:
-            printf("Digite um codigo valido!");
-            break;
-        }
-        break;
-
-    case 5:
-        printf("Digite a quantidade do item :");
-        scanf("%f", &qtd);
-        // p = (float *)malloc(qtd * sizeof(float));
-        mult = (qtd * 4.50);
-        printf("O valor a pagar é: %.2f Reais\n\n", mult);
-
-        opcao2 = payment_menu();
-
-        switch (opcao2)
-        {
-        case 1:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 2:
-            porcentagem = (mult * 2) / 100;
-            soma = (porcentagem + mult);
-            printf("taxa de 2%%, sobre o valor da compra :\n");
-            printf("O valor total é: %.2f Reais\n", soma);
-            break;
-
-        case 3:
-            printf("O valor a pagar sera de : %.2f Reais\n", mult);
-            break;
-
-        default:
-            printf("Digite um codigo valido!");
-            break;
-        }
-        break;
-
-    case 6:
-        printf("Digite a sua idade :");
-        scanf("%d", &idade);
-
-        if (idade >= 18)
-        {
-            printf("Digite a quantidade do item :");
-            scanf("%f", &qtd);
-            // p = (float *)malloc(qtd * sizeof(float));
-            mult = (qtd * 6.00);
-            printf("O valor a pagar é: %.2f Reais\n\n", mult);
-
-            opcao2 = payment_menu();
-
-            switch (opcao2)
-            {
-            case 1:
-                porcentagem = (mult * 2) / 100;
-                soma = (porcentagem + mult);
-                printf("taxa de 2%%, sobre o valor da compra :\n");
-                printf("O valor total é: %.2f Reais\n", soma);
-                break;
-
-            case 2:
-                porcentagem = (mult * 2) / 100;
-                soma = (porcentagem + mult);
-                printf("taxa de 2%%, sobre o valor da compra :\n");
-                printf("O valor total é: %.2f Reais\n", soma);
-                break;
-
-            case 3:
-                printf("O valor a pagar sera de : %.2f Reais\n", mult);
-                break;
-
-            default:
-                printf("Digite um codigo valido!");
-                break;
-            }
-            break;
-        }
-        else if ((idade >= 0) && (idade < 18))
-        {
-            printf("Venda proibida para menores de 18 anos");
-        }
-        else
-        {
-            printf("Digite uma idade valida!!");
-        }
-        break;
-
-    case 7:
-        printf("Digite a sua idade :");
-        scanf("%d", &idade);
-
-        if (idade >= 18)
-        {
-            printf("Digite a quantidade do item :");
-            scanf("%f", &qtd);
-            // p = (float *)malloc(qtd * sizeof(float));
-            mult = (qtd * 6.00);
-            printf("O valor a pagar sera de : %.2f Reais\n\n", mult);
-
-            opcao2 = payment_menu();
-
-            switch (opcao2)
-            {
-            case 1:
-                porcentagem = (mult * 2) / 100;
-                soma = (porcentagem + mult);
-                printf("taxa de 2%%, sobre o valor da compra :\n");
-                printf("O valor total é: %.2f Reais\n", soma);
-                break;
-
-            case 2:
-                porcentagem = (mult * 2) / 100;
-                soma = (porcentagem + mult);
-                printf("taxa de 2%%, sobre o valor da compra :\n");
-                printf("O valor total é: %.2f Reais\n", soma);
-                break;
-
-            case 3:
-                printf("O valor a pagar sera de : %.2f Reais\n", mult);
-                break;
-
-            default:
-                printf("Digite um codigo valido!");
-                break;
-            }
-            break;
-        }
-        else if ((idade >= 0) && (idade < 18))
-        {
-            printf("Venda proibida para menores de 18 anos!");
-        }
-        else
-        {
-            printf("Digite uma idade valida!");
-        }
+        printf("O valor a pagar sera de : %.2f Reais\n", preco_total);
         break;
 
     default:
@@ -308,7 +65,8 @@ int main(void)
     return 0;
 }
 
-int main_menu() {
+int main_menu()
+{
     printf("MENU DE PEDIDOS:\n\n");
     printf("1 - para Cachorro-quente R$ 12,00\n");
     printf("2 - para X-salada R$ 15,50\n");
@@ -325,7 +83,8 @@ int main_menu() {
     return opcao;
 }
 
-int payment_menu() {
+int payment_menu()
+{
     printf("MENU DE PAGAMENTO :\n\n");
     printf("1 - para Cartão de Débito +2%%\n");
     printf("2 - para Cartão de Credito +2%%\n");
