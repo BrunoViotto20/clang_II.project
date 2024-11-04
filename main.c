@@ -10,7 +10,7 @@ int main(void)
     int opcao;
     int opcao2;
     int idade;
-    float *p;
+    // float *p;
 
     printf("MENU DE PEDIDOS:\n\n");
     printf("1 - para Cachorro-quente R$ 12,00\n");
@@ -30,7 +30,9 @@ int main(void)
         printf("Digite a quantidade do item :");
         scanf("%f", &qtd);
 
-        p = (float *)malloc(qtd * sizeof(float));
+        // TODO (Bruno Viotto):
+        // Pecado nível master esse aqui
+        // p = (float *)malloc(qtd * sizeof(float));
 
         mult = (qtd * 12.00);
         printf("O valor a pagar é: %.2f Reais\n", mult);
@@ -73,7 +75,7 @@ int main(void)
         printf("Digite a quantidade do item :");
         scanf("%f", &qtd);
 
-        p = (float *)malloc(qtd * sizeof(float));
+        // p = (float *)malloc(qtd * sizeof(float));
 
         mult = (qtd * 15.50);
         printf("O valor a pagar sera de : %.2f Reais\n\n", mult);
@@ -115,7 +117,7 @@ int main(void)
     case 3:
         printf("Digite a quantidade do item :");
         scanf("%f", &qtd);
-        p = (float *)malloc(qtd * sizeof(float));
+        // p = (float *)malloc(qtd * sizeof(float));
         mult = (qtd * 18.00);
         printf("O valor a pagar é: %.2f Reais\n\n", mult);
 
@@ -156,7 +158,7 @@ int main(void)
     case 4:
         printf("Digite a quantidade do item :");
         scanf("%f", &qtd);
-        p = (float *)malloc(qtd * sizeof(float));
+        // p = (float *)malloc(qtd * sizeof(float));
         mult = (qtd * 8.00);
         printf("O valor a pagar é: %.2f Reais\n\n", mult);
 
@@ -196,7 +198,7 @@ int main(void)
     case 5:
         printf("Digite a quantidade do item :");
         scanf("%f", &qtd);
-        p = (float *)malloc(qtd * sizeof(float));
+        // p = (float *)malloc(qtd * sizeof(float));
         mult = (qtd * 4.50);
         printf("O valor a pagar é: %.2f Reais\n\n", mult);
 
@@ -242,7 +244,7 @@ int main(void)
         {
             printf("Digite a quantidade do item :");
             scanf("%f", &qtd);
-            p = (float *)malloc(qtd * sizeof(float));
+            // p = (float *)malloc(qtd * sizeof(float));
             mult = (qtd * 6.00);
             printf("O valor a pagar é: %.2f Reais\n\n", mult);
 
@@ -298,7 +300,7 @@ int main(void)
         {
             printf("Digite a quantidade do item :");
             scanf("%f", &qtd);
-            p = (float *)malloc(qtd * sizeof(float));
+            // p = (float *)malloc(qtd * sizeof(float));
             mult = (qtd * 6.00);
             printf("O valor a pagar sera de : %.2f Reais\n\n", mult);
 
