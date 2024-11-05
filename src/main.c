@@ -21,6 +21,7 @@ struct PaymentMethod
 void clear_console();
 void wait_key_press();
 int get_age();
+int get_amount();
 Product products_menu(const Product *products, int length, int age);
 PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length);
 
@@ -46,9 +47,7 @@ int main(void)
 
     Product product = products_menu(products, products_length, age);
 
-    printf("Digite a quantidade do item: ");
-    int amount;
-    scanf("%d", &amount);
+    int amount = get_amount();
 
     PaymentMethod payment_method = payment_menu(payment_methods, payment_methods_length);
 
@@ -75,7 +74,7 @@ void clear_console()
 
 void wait_key_press()
 {
-    printf("Press any key to Continue\n");
+    printf("Pressione ENTER para continuar...\n");
     getchar();
     getchar();
 }
@@ -97,6 +96,27 @@ int get_age()
         }
 
         return age;
+    }
+}
+
+int get_amount()
+{
+    while (true)
+    {
+        int amount;
+        printf("Digite a quantidade do item: ");
+        scanf("%d", &amount);
+
+        if (amount <= 0)
+        {
+            clear_console();
+            printf("Quantidade inválida! Tente novamente\n\n");
+            wait_key_press();
+            clear_console();
+            continue;
+        }
+
+        return amount;
     }
 }
 
