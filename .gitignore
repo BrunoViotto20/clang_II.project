@@ -1,4 +1,11 @@
 
-## EXECUTABLES
+## BINARY FILES
 
-main
+bin/
+
+
+## IDE
+
+.vs/
+.idea/
+.vscode/
