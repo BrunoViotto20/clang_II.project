@@ -1,6 +1,23 @@
 #ifndef __LANCHONETE_H__
 #define __LANCHONETE_H__
 
+#define USER_NAME_LENGTH 64
+#define CPF_LENGTH 11
+
+typedef struct User
+{
+    long id;
+    char name[USER_NAME_LENGTH];
+    char cpf[CPF_LENGTH];
+    Order *orders;
+} User;
+
+typedef struct Order
+{
+    Product product;
+    PaymentMethod payment_method;
+} Order;
+
 typedef struct Product
 {
     char name[32];
