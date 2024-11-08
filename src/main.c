@@ -1,29 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-typedef struct Product Product;
-typedef struct PaymentMethod PaymentMethod;
+#include "console.h"
+#include "lanchonete.h"
 
-struct Product
-{
-    char name[32];
-    double price;
-    bool adult;
-};
-
-struct PaymentMethod
-{
-    char name[32];
-    double fee;
-};
-
-void clear_console();
-void wait_key_press();
 int get_age();
 int get_amount();
-Product products_menu(const Product *products, int length, int age);
-PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length);
 
 int main(void)
 {
@@ -61,22 +44,6 @@ int main(void)
     printf("O valor total é: R$%.2f\n", final_price);
 
     return 0;
-}
-
-void clear_console()
-{
-#if _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
-}
-
-void wait_key_press()
-{
-    printf("Pressione ENTER para continuar...\n");
-    getchar();
-    getchar();
 }
 
 int get_age()
@@ -117,79 +84,5 @@ int get_amount()
         }
 
         return amount;
-    }
-}
-
-Product products_menu(const Product *products, int length, int age)
-{
-    while (true)
-    {
-        printf("MENU DE PEDIDOS:\n\n");
-        for (int i = 0; i < length; i++)
-        {
-            Product product = products[i];
-            printf("[ %d ] %s R$%.2lf\n", i + 1, product.name, product.price);
-        }
-        printf("\n");
-
-        int option;
-        printf("Selecione o produto: ");
-        scanf("%d", &option);
-
-        if (option <= 0 || option > length)
-        {
-            clear_console();
-            printf("Produto inválido! Tente novamente\n\n");
-            wait_key_press();
-            clear_console();
-            continue;
-        }
-
-        Product product = products[option - 1];
-
-        if (product.adult && age < 18)
-        {
-            clear_console();
-            printf("Venda proibida para menores de 18 anos!\n");
-            wait_key_press();
-            clear_console();
-            continue;
-        }
-
-        return product;
-    }
-}
-
-PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length)
-{
-    while (true)
-    {
-        printf("MENU DE PAGAMENTO:\n\n");
-        for (int i = 0; i < length; i++)
-        {
-            PaymentMethod payment_method = payment_methods[i];
-            printf("[ %d ] %s", i + 1, payment_method.name);
-
-            if (payment_method.fee != 0)
-            {
-                printf(" (+%.1lf%%)\n", payment_method.fee * 100);
-            }
-        }
-        printf("\n");
-
-        int option;
-        printf("Selecione a forma de pagamento: ");
-        scanf("%d", &option);
-
-        if (option <= 0 || option > length)
-        {
-            clear_console();
-            printf("Forma de pagamento inválida! Tente novamente\n\n");
-            wait_key_press();
-            clear_console();
-            continue;
-        }
-
-        return payment_methods[option - 1];
     }
 }
