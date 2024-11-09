@@ -9,14 +9,7 @@ typedef struct User
     long id;
     char name[USER_NAME_LENGTH];
     char cpf[CPF_LENGTH];
-    Order *orders;
 } User;
-
-typedef struct Order
-{
-    Product product;
-    PaymentMethod payment_method;
-} Order;
 
 typedef struct Product
 {
@@ -30,6 +23,12 @@ typedef struct PaymentMethod
     char name[32];
     double fee;
 } PaymentMethod;
+
+typedef struct Order
+{
+    Product product;
+    PaymentMethod payment_method;
+} Order;
 
 Product products_menu(const Product *products, int length, int age);
 PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length);
