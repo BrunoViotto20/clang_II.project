@@ -3,6 +3,7 @@
 
 #include "lanchonete.h"
 
+/// @brief Represents a connection to the database, required to access and manipulate it.
 typedef struct DatabaseConnection DatabaseConnection;
 
 /// @brief Opens a connection to the database.
