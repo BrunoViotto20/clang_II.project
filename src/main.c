@@ -52,8 +52,9 @@ int get_age()
     {
         int age;
         printf("Digite a sua idade: ");
-        scanf("%d", &age);
-        if (age <= 0)
+        int result = scanf("%d", &age);
+
+        if (result != 1 || age <= 0)
         {
             clear_console();
             printf("Idade inválida! Tente novamente\n\n");
@@ -72,9 +73,9 @@ int get_amount()
     {
         int amount;
         printf("Digite a quantidade do item: ");
-        scanf("%d", &amount);
+        int result = scanf("%d", &amount);
 
-        if (amount <= 0)
+        if (result != 1 || amount <= 0)
         {
             clear_console();
             printf("Quantidade inválida! Tente novamente\n\n");

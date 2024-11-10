@@ -5,11 +5,18 @@
 
 void clear_console()
 {
+    int result;
+
 #if _WIN32
-    system("cls");
+    result = system("cls");
 #else
-    system("clear");
+    result = system("clear");
 #endif
+
+    if (result != 0)
+    {
+        perror("ERRO: Falha ao limpar o console");
+    }
 }
 
 void wait_key_press()

@@ -18,9 +18,9 @@ Product products_menu(const Product *products, int length, int age)
 
         int option;
         printf("Selecione o produto: ");
-        scanf("%d", &option);
+        int result = scanf("%d", &option);
 
-        if (option <= 0 || option > length)
+        if (result != 1 || option <= 0 || option > length)
         {
             clear_console();
             printf("Produto inválido! Tente novamente\n\n");
@@ -63,9 +63,9 @@ PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length)
 
         int option;
         printf("Selecione a forma de pagamento: ");
-        scanf("%d", &option);
+        int result = scanf("%d", &option);
 
-        if (option <= 0 || option > length)
+        if (result != 1 || option <= 0 || option > length)
         {
             clear_console();
             printf("Forma de pagamento inválida! Tente novamente\n\n");
