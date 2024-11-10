@@ -13,7 +13,11 @@ DatabaseConnection *db_open();
 /// @param db The database connection to be closed.
 void db_close(DatabaseConnection *db);
 
+/// @brief Gets all users in the database.
+/// @param db The database connection to be used.
+/// @return Returns an array of users.
 User *db_get_users(DatabaseConnection *db);
+
 User db_get_user(DatabaseConnection *db, char cpf[CPF_LENGTH]);
 void db_insert_user(DatabaseConnection *db, User *user);
 User db_disable_user(DatabaseConnection *db, User *user);
