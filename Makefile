@@ -8,9 +8,9 @@ LIB=console.c lanchonete.c database.c
 OBJ=$(addprefix $(OBJ_DIR), $(LIB:.c=.o))
 EXE=$(BIN_DIR)/$(shell basename $(SRC:.c=))
 
-# .PHONY: clean run $(OBJ) $(EXE)
+.PHONY: clean run
 
-all: clean setup $(EXE)
+all: clean $(EXE)
 
 run: $(EXE)
 	$<
@@ -23,6 +23,4 @@ $(EXE): $(OBJ)
 
 clean:
 	rm -rf $(EXE) $(BIN_DIR)
-
-setup:
 	mkdir $(BIN_DIR)
