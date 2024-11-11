@@ -151,6 +151,11 @@ void db_get_users(Database *db, UsersResult *result)
         // Gets a line from the database
         char *eof = fgets(line_buffer, LINE_BUFFER_LENGTH, db->users);
 
+        if (eof == NULL)
+        {
+            break;
+        }
+
         // Grows the user buffer if it is full
         if (users_capacity <= users_length)
         {
@@ -178,11 +183,6 @@ void db_get_users(Database *db, UsersResult *result)
             *result = make_users_failure("The database is corrupted");
             return;
         }
-
-        if (eof == NULL)
-        {
-            break;
-        }
     }
 
     // Shrinks the user buffer to its exact length
@@ -202,7 +202,38 @@ void db_get_users(Database *db, UsersResult *result)
     *result = make_users_success(users, users_length);
 }
 
-// User db_get_user(Database *db, char cpf[CPF_LENGTH]);
+void db_get_user(Database *db, char cpf[CPF_LENGTH], UserResult *result)
+{
+    rewind(db->users);
+
+    char buffer[LINE_BUFFER_LENGTH] = {0};
+    while (true)
+    {
+        char *eof = fgets(buffer, LINE_BUFFER_LENGTH, db->users);
+        if (eof == NULL)
+        {
+            *result = make_user_failure("Nenhum usuário encontrado!");
+            return;
+        }
+
+        User user;
+        bool successful_parse = try_parse_user(buffer, &user);
+        if (!successful_parse)
+        {
+            *result = make_user_failure("Banco de dados corrompido");
+            return;
+        }
+
+        if (strcmp(cpf, user.cpf) != 0)
+        {
+            continue;
+        }
+
+        *result = make_user_success(user);
+        return;
+    }
+}
+
 // void db_insert_user(Database *db, User *user);
 // User db_disable_user(Database *db, User *user);
 // User db_delete_user(Database *db, User *user);
