@@ -9,7 +9,8 @@
 #define USERS_PATH "database/users.txt"
 #define ORDERS_PATH "database/orders.txt"
 
-#define CHAR_SEPARATOR ';'
+#define FIELD_SEPARATOR ';'
+#define RECORD_SEPARATOR '\n'
 #define LINE_BUFFER_LENGTH 256
 #define LONG_MAX_LENGTH 19
 
@@ -96,6 +97,10 @@ int try_consume_i64(char *input, long *number);
 /// @param user The user parsed from the string.
 /// @return Returns true if the parse was successful, false otherwise.
 bool try_parse_user(char *string, User *user);
+
+void write_separator(FILE *fd);
+
+bool write_user(Database *db, User *user);
 
 void db_open(DatabaseResult *result)
 {
@@ -224,7 +229,31 @@ void db_get_user(Database *db, char cpf[CPF_LENGTH], UserResult *result)
     }
 }
 
-// void db_insert_user(Database *db, User *user);
+void db_insert_user(Database *db, User *user, UnitResult *result)
+{
+    fseek(db->users, 0, SEEK_END);
+
+    int pos = ftell(db->users);
+    if (pos != 0)
+    {
+        fseek(db->users, -1, SEEK_END);
+        char last = fgetc(db->users);
+        if (last != '\n')
+        {
+            fwrite("\n", sizeof(char), 1, db->users);
+        }
+    }
+
+    bool success_insert = write_user(db, user);
+    if (!success_insert)
+    {
+        *result = make_unit_failure("Falha ao inserir o usuário");
+        return;
+    }
+
+    *result = make_unit_success();
+}
+
 // User db_disable_user(Database *db, User *user);
 // User db_delete_user(Database *db, User *user);
 
@@ -398,7 +427,7 @@ bool try_parse_user(char *string, User *user)
     // Parses the user id
     int offset = try_consume_i64(string, &user->id);
     string += offset;
-    if (offset == 0 || *string != CHAR_SEPARATOR)
+    if (offset == 0 || *string != FIELD_SEPARATOR)
     {
         return false;
     }
@@ -407,7 +436,7 @@ bool try_parse_user(char *string, User *user)
     // Parses the user name
     offset = try_consume_string(string, user->name, USER_NAME_LENGTH);
     string += offset;
-    if (offset == 0 || *string != CHAR_SEPARATOR)
+    if (offset == 0 || *string != FIELD_SEPARATOR)
     {
         return false;
     }
@@ -468,4 +497,30 @@ int try_consume_i64(char *input, long *number)
     }
 
     return i;
+}
+
+void write_separator(FILE *fd)
+{
+    const char buffer[1] = {FIELD_SEPARATOR};
+    fwrite(buffer, sizeof(char), 1, fd);
+}
+
+bool write_user(Database *db, User *user)
+{
+    char id_buffer[LONG_MAX_LENGTH + 1] = {0};
+    snprintf(id_buffer, sizeof(id_buffer), "%ld", user->id);
+    int id_length = strlen(id_buffer);
+
+    int name_length = strlen(user->name);
+
+    FILE *fd = db->users;
+    fwrite(id_buffer, sizeof(char), id_length, fd);
+    write_separator(fd);
+    fwrite(user->name, sizeof(char), name_length, fd);
+    write_separator(fd);
+    fwrite(user->cpf, sizeof(char), CPF_LENGTH, fd);
+    const char buffer[1] = {RECORD_SEPARATOR};
+    fwrite(buffer, sizeof(char), 1, fd);
+
+    return true;
 }
