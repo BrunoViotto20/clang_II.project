@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,11 +13,68 @@
 #define LINE_BUFFER_LENGTH 256
 #define LONG_MAX_LENGTH 19
 
-struct DatabaseConnection
+struct Database
 {
     FILE *users;
     FILE *orders;
 };
+
+struct UnitResult
+{
+    bool is_success;
+    Error error;
+};
+
+struct DatabaseResult
+{
+    bool is_success;
+    union
+    {
+        Database *database;
+        Error error;
+    };
+};
+
+struct UsersResult
+{
+    bool is_success;
+    union
+    {
+        Users users;
+        Error error;
+    };
+};
+
+struct UserResult
+{
+    bool is_success;
+    union
+    {
+        User user;
+        Error error;
+    };
+};
+
+struct OrdersResult
+{
+    bool is_success;
+    union
+    {
+        Orders orders;
+        Error error;
+    };
+};
+
+UnitResult make_unit_success();
+UnitResult make_unit_failure(char *message);
+DatabaseResult make_database_success(Database *database);
+DatabaseResult make_database_failure(char *message);
+UsersResult make_users_success(User *users, long length);
+UsersResult make_users_failure(char *message);
+UserResult make_user_success(User user);
+UserResult make_user_failure(char *message);
+OrdersResult make_orders_success(Order *orders, long length);
+OrdersResult make_orders_failure(char *message);
 
 /// @brief Tries to consume and parse a string, value surrounded by the character \" on both ends.
 /// @param input The string to be consumed and parsed.
@@ -39,36 +97,51 @@ int try_consume_i64(char *input, long *number);
 /// @return Returns true if the parse was successful, false otherwise.
 bool try_parse_user(char *string, User *user);
 
-DatabaseConnection *db_open()
+void db_open(DatabaseResult *result)
 {
-    DatabaseConnection *db = (DatabaseConnection *)malloc(sizeof(DatabaseConnection));
+    Database *db = (Database *)malloc(sizeof(Database));
 
     if (db == NULL)
     {
-        perror("Falha ao abrir o banco de dados\n");
-        return NULL;
+        *result = make_database_failure("Falha ao alocar o handler do banco de dados");
+        return;
     }
 
     db->users = fopen(USERS_PATH, "a+");
+
+    if (db->users == NULL)
+    {
+        *result = make_database_failure("Falha ao abrir arquivo");
+        return;
+    }
+
     db->orders = fopen(ORDERS_PATH, "a+");
 
-    return db;
+    if (db->orders == NULL)
+    {
+        *result = make_database_failure("Falha ao abrir arquivo");
+        return;
+    }
+
+    *result = make_database_success(db);
 }
 
-void db_close(DatabaseConnection *db)
+void db_close(Database *db, UnitResult *result)
 {
     fclose(db->users);
     fclose(db->orders);
     free(db);
+
+    *result = make_unit_success();
 }
 
-User *db_get_users(DatabaseConnection *db)
+void db_get_users(Database *db, UsersResult *result)
 {
     rewind(db->users);
 
     // Allocates a buffer to retrieve the users
     int users_capacity = 8;
-    int users_length = 0;
+    long users_length = 0;
     User *users = (User *)malloc(sizeof(User) * users_capacity);
 
     // Loop to get all users
@@ -82,13 +155,16 @@ User *db_get_users(DatabaseConnection *db)
         if (users_capacity <= users_length)
         {
             users_capacity *= 2;
-            users = realloc(users, sizeof(User) * users_capacity);
+            User *temp = realloc(users, sizeof(User) * users_capacity);
 
             if (users == NULL)
             {
-                perror("ERROR: Out of memory to reallocate");
-                return NULL;
+                free(users);
+                *result = make_users_failure("No memory to reallocate");
+                return;
             }
+
+            users = temp;
         }
 
         // Tries to parse the user from the retrieved line and store it into the array
@@ -98,8 +174,9 @@ User *db_get_users(DatabaseConnection *db)
         // If fails to parse the user, fails the whole function
         if (!successful_parse)
         {
-            perror("ERROR: The database is corrupted");
-            return NULL;
+            free(users);
+            *result = make_users_failure("The database is corrupted");
+            return;
         }
 
         if (eof == NULL)
@@ -111,27 +188,189 @@ User *db_get_users(DatabaseConnection *db)
     // Shrinks the user buffer to its exact length
     if (users_capacity != users_length)
     {
-        users = realloc(users, sizeof(User) * users_length);
+        User *temp = realloc(users, sizeof(User) * users_length);
 
         if (users == NULL)
         {
-            perror("ERROR: Out of memory to reallocate");
-            return NULL;
+            *result = make_users_failure("No memory to reallocate");
+            return;
         }
+
+        users = temp;
     }
 
-    return users;
+    *result = make_users_success(users, users_length);
 }
 
-// User db_get_user(DatabaseConnection *db, char cpf[CPF_LENGTH]);
-// void db_insert_user(DatabaseConnection *db, User *user);
-// User db_disable_user(DatabaseConnection *db, User *user);
-// User db_delete_user(DatabaseConnection *db, User *user);
+// User db_get_user(Database *db, char cpf[CPF_LENGTH]);
+// void db_insert_user(Database *db, User *user);
+// User db_disable_user(Database *db, User *user);
+// User db_delete_user(Database *db, User *user);
 
-// Order *db_get_orders(DatabaseConnection *db, User *user);
-// void db_insert_order(DatabaseConnection *db, Order *order);
+// Order *db_get_orders(Database *db, User *user);
+// void db_insert_order(Database *db, Order *order);
 
 /* Private functions */
+
+UnitResult make_unit_success()
+{
+    UnitResult result = {true, {NULL}};
+    return result;
+}
+
+UnitResult make_unit_failure(char *message)
+{
+    Error error = {message};
+    UnitResult result = {false};
+    result.error = error;
+    return result;
+}
+
+bool is_unit_success(UnitResult *result)
+{
+    return result->is_success;
+}
+
+Error get_unit_error(UnitResult *result)
+{
+    assert(result->is_success);
+
+    return result->error;
+}
+
+DatabaseResult make_database_success(Database *database)
+{
+    DatabaseResult result = {true, {database}};
+    return result;
+}
+
+DatabaseResult make_database_failure(char *message)
+{
+    Error error = {message};
+    DatabaseResult result = {false};
+    result.error = error;
+    return result;
+}
+
+bool is_database_success(DatabaseResult *result)
+{
+    return result->is_success;
+}
+
+Database *get_database_value(DatabaseResult *result)
+{
+    assert(result->is_success);
+
+    return result->database;
+}
+
+Error get_database_error(DatabaseResult *result)
+{
+    assert(result->is_success);
+
+    return result->error;
+}
+
+UsersResult make_users_success(User *users, long length)
+{
+    Users usrs = {users, length};
+    UsersResult result = {true, {usrs}};
+    return result;
+}
+
+UsersResult make_users_failure(char *message)
+{
+    Error error = {message};
+    UsersResult result = {false};
+    result.error = error;
+    return result;
+}
+
+bool is_users_success(UsersResult *result)
+{
+    return result->is_success;
+}
+
+Users get_users_value(UsersResult *result)
+{
+    assert(result->is_success);
+
+    return result->users;
+}
+
+Error get_users_error(UsersResult *result)
+{
+    assert(result->is_success);
+
+    return result->error;
+}
+
+UserResult make_user_success(User user)
+{
+    UserResult result = {true, {user}};
+    return result;
+}
+
+UserResult make_user_failure(char *message)
+{
+    Error error = {message};
+    UserResult result = {false};
+    result.error = error;
+    return result;
+}
+
+bool is_user_success(UserResult *result)
+{
+    return result->is_success;
+}
+
+User get_user_value(UserResult *result)
+{
+    assert(result->is_success);
+
+    return result->user;
+}
+
+Error get_user_error(UserResult *result)
+{
+    assert(result->is_success);
+
+    return result->error;
+}
+
+OrdersResult make_orders_success(Order *orders, long length)
+{
+    Orders ordrs = {orders, length};
+    OrdersResult result = {true, {ordrs}};
+    return result;
+}
+
+OrdersResult make_orders_failure(char *message)
+{
+    Error error = {message};
+    OrdersResult result = {false};
+    result.error = error;
+    return result;
+}
+
+bool is_orders_success(OrdersResult *result)
+{
+    return result->is_success;
+}
+
+Orders get_orders_value(OrdersResult *result)
+{
+    assert(result->is_success);
+
+    return result->orders;
+}
+
+Error get_orders_error(OrdersResult *result)
+{
+    assert(result->is_success);
+
+    return result->error;
+}
 
 bool try_parse_user(char *string, User *user)
 {
