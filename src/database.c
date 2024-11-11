@@ -100,7 +100,6 @@ bool try_parse_user(char *string, User *user);
 void db_open(DatabaseResult *result)
 {
     Database *db = (Database *)malloc(sizeof(Database));
-
     if (db == NULL)
     {
         *result = make_database_failure("Falha ao alocar o handler do banco de dados");
@@ -108,7 +107,6 @@ void db_open(DatabaseResult *result)
     }
 
     db->users = fopen(USERS_PATH, "a+");
-
     if (db->users == NULL)
     {
         *result = make_database_failure("Falha ao abrir arquivo");
@@ -116,7 +114,6 @@ void db_open(DatabaseResult *result)
     }
 
     db->orders = fopen(ORDERS_PATH, "a+");
-
     if (db->orders == NULL)
     {
         *result = make_database_failure("Falha ao abrir arquivo");
@@ -150,7 +147,6 @@ void db_get_users(Database *db, UsersResult *result)
     {
         // Gets a line from the database
         char *eof = fgets(line_buffer, LINE_BUFFER_LENGTH, db->users);
-
         if (eof == NULL)
         {
             break;
@@ -161,22 +157,18 @@ void db_get_users(Database *db, UsersResult *result)
         {
             users_capacity *= 2;
             User *temp = realloc(users, sizeof(User) * users_capacity);
-
             if (users == NULL)
             {
                 free(users);
                 *result = make_users_failure("No memory to reallocate");
                 return;
             }
-
             users = temp;
         }
 
         // Tries to parse the user from the retrieved line and store it into the array
         bool successful_parse = try_parse_user(line_buffer, users + users_length);
         users_length++;
-
-        // If fails to parse the user, fails the whole function
         if (!successful_parse)
         {
             free(users);
@@ -189,13 +181,11 @@ void db_get_users(Database *db, UsersResult *result)
     if (users_capacity != users_length)
     {
         User *temp = realloc(users, sizeof(User) * users_length);
-
         if (users == NULL)
         {
             *result = make_users_failure("No memory to reallocate");
             return;
         }
-
         users = temp;
     }
 
