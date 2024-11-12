@@ -81,16 +81,14 @@ OrdersResult make_orders_failure(char *message);
 /// @param input The string to be consumed and parsed.
 /// @param buffer The buffer to which the consumed string will be written to.
 /// @param buffer_length The length of the buffer being written into.
-/// @return Returns an integer representing the offset consumed by the method,
-///         if the returned value is zero, the method failed to consume/parse the string.
-int try_consume_string(char *input, char *buffer, int buffer_length);
+/// @return Returns a pointer to the end of the consumed value.
+char *try_consume_string(char *input, char *buffer, int buffer_length);
 
 /// @brief Tris to consume and parse a signed 64 bits number.
 /// @param input The string to be consumed and parsed.
 /// @param number The number parsed from the input string.
-/// @return Returns an integer representing the offset consumed by the method,
-///         if the returned value is zero, the method failed to consume/parse the string.
-int try_consume_i64(char *input, long *number);
+/// @return Returns a pointer to the end of the consumed value.
+char *try_consume_i64(char *input, long *number);
 
 /// @brief Tries to parse a user.
 /// @param string The string to be parsed.
@@ -425,27 +423,24 @@ Error get_orders_error(OrdersResult *result)
 bool try_parse_user(char *string, User *user)
 {
     // Parses the user id
-    int offset = try_consume_i64(string, &user->id);
-    string += offset;
-    if (offset == 0 || *string != FIELD_SEPARATOR)
+    string = try_consume_i64(string, &user->id);
+    if (string == NULL || *string != FIELD_SEPARATOR)
     {
         return false;
     }
     string++;
 
     // Parses the user name
-    offset = try_consume_string(string, user->name, USER_NAME_LENGTH);
-    string += offset;
-    if (offset == 0 || *string != FIELD_SEPARATOR)
+    string = try_consume_string(string, user->name, USER_NAME_LENGTH);
+    if (string == NULL || *string != FIELD_SEPARATOR)
     {
         return false;
     }
     string++;
 
     // Parses the user cpf
-    offset = try_consume_string(string, user->cpf, CPF_LENGTH);
-    string += offset;
-    if (offset == 0 || *string != '\0')
+    string = try_consume_string(string, user->cpf, CPF_LENGTH);
+    if (string == NULL || *string != '\0')
     {
         return false;
     }
@@ -454,11 +449,11 @@ bool try_parse_user(char *string, User *user)
     return true;
 }
 
-int try_consume_string(char *input, char *buffer, int buffer_length)
+char *try_consume_string(char *input, char *buffer, int buffer_length)
 {
     if (input[0] != '"')
     {
-        return 0;
+        return NULL;
     }
     input++;
 
@@ -471,18 +466,18 @@ int try_consume_string(char *input, char *buffer, int buffer_length)
 
     if (input[i] != '"')
     {
-        return 0;
+        return NULL;
     }
 
-    return i;
+    return input;
 }
 
-int try_consume_i64(char *input, long *number)
+char *try_consume_i64(char *input, long *number)
 {
     char buffer[LONG_MAX_LENGTH + 1] = {0};
 
     int i;
-    for (i = 0; input[i] != '\0' && input[i] != ';' && i < LONG_MAX_LENGTH; i++)
+    for (i = 0; input[i] != '\0' && (input[i] != FIELD_SEPARATOR || input[i] != RECORD_SEPARATOR) && i < LONG_MAX_LENGTH; i++)
     {
         buffer[i] = input[i];
     }
@@ -496,7 +491,7 @@ int try_consume_i64(char *input, long *number)
         return 0;
     }
 
-    return i;
+    return end;
 }
 
 void write_separator(FILE *fd)
