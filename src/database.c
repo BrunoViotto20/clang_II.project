@@ -21,52 +21,6 @@ struct Database
     FILE *orders;
 };
 
-struct UnitResult
-{
-    bool is_success;
-    Error error;
-};
-
-struct DatabaseResult
-{
-    bool is_success;
-    union
-    {
-        Database *database;
-        Error error;
-    };
-};
-
-struct UsersResult
-{
-    bool is_success;
-    union
-    {
-        Users users;
-        Error error;
-    };
-};
-
-struct UserResult
-{
-    bool is_success;
-    union
-    {
-        User user;
-        Error error;
-    };
-};
-
-struct OrdersResult
-{
-    bool is_success;
-    union
-    {
-        Orders orders;
-        Error error;
-    };
-};
-
 UnitResult make_unit_success();
 UnitResult make_unit_failure(char *message);
 DatabaseResult make_database_success(Database *database);

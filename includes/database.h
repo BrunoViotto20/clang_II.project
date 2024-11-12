@@ -1,6 +1,8 @@
 #ifndef __DATABASE_H__
 #define __DATABASE_H__
 
+#include <stdbool.h>
+
 #include "lanchonete.h"
 
 /// @brief Represents a connection to the database, required to access and manipulate it.
@@ -34,19 +36,55 @@ typedef struct Error
 } Error;
 
 /// @brief Represents a result which may succeed or return an error.
-typedef struct UnitResult UnitResult;
+typedef struct UnitResult
+{
+    bool is_success;
+    Error error;
+} UnitResult;
 
 /// @brief Represents a result which may return a Database or an error.
-typedef struct DatabaseResult DatabaseResult;
+typedef struct DatabaseResult
+{
+    bool is_success;
+    union
+    {
+        Database *database;
+        Error error;
+    };
+} DatabaseResult;
 
 /// @brief Represents a result which may return a collection of users or an error.
-typedef struct UsersResult UsersResult;
+typedef struct UsersResult
+{
+    bool is_success;
+    union
+    {
+        Users users;
+        Error error;
+    };
+} UsersResult;
 
 /// @brief Represents a result which may return a user or an error.
-typedef struct UserResult UserResult;
+typedef struct UserResult
+{
+    bool is_success;
+    union
+    {
+        User user;
+        Error error;
+    };
+} UserResult;
 
 /// @brief Represents a result which may return a collection of orders or an error.
-typedef struct OrdersResult OrdersResult;
+typedef struct OrdersResult
+{
+    bool is_success;
+    union
+    {
+        Orders orders;
+        Error error;
+    };
+} OrdersResult;
 
 /// @brief Returns if the operation result was successful.
 /// @param result The operation reuslt.
