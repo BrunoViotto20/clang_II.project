@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <unistd.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,6 +90,10 @@ char *try_consume_string(char *input, char *buffer, int buffer_length);
 /// @param number The number parsed from the input string.
 /// @return Returns a pointer to the end of the consumed value.
 char *try_consume_i64(char *input, long *number);
+
+char *try_consume_bool(char *buffer, bool *boolean);
+char *try_consume_true(char *buffer);
+char *try_consume_false(char *buffer);
 
 /// @brief Tries to parse a user.
 /// @param string The string to be parsed.
@@ -252,7 +257,66 @@ void db_insert_user(Database *db, User *user, UnitResult *result)
     *result = make_unit_success();
 }
 
-// User db_disable_user(Database *db, User *user);
+void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
+{
+    rewind(db->users);
+
+    char buffer[LINE_BUFFER_LENGTH] = {0};
+    while (true)
+    {
+        int record_start = ftell(db->users);
+        char *eof = fgets(buffer, LINE_BUFFER_LENGTH, db->users);
+        if (eof == NULL)
+        {
+            *result = make_unit_failure("Usuário não encontrado");
+            return;
+        }
+
+        User user;
+        bool successful_parse = try_parse_user(buffer, &user);
+        if (!successful_parse)
+        {
+            *result = make_unit_failure("Banco de dados corrompido");
+            return;
+        }
+
+        if (!user.active || strcmp(user.cpf, cpf) != 0)
+        {
+            continue;
+        }
+
+        int record_end = ftell(db->users);
+        fseek(db->users, 0, SEEK_END);
+        int file_size = ftell(db->users);
+
+        fseek(db->users, record_end, SEEK_SET);
+        int leftover = file_size - record_end;
+        char *file_buffer = malloc(sizeof(char) * leftover);
+        int read = fread(file_buffer, sizeof(char), leftover, db->users);
+        if (read != leftover)
+        {
+            make_unit_failure("Falha ao atualizar arquivo");
+        }
+        fseek(db->users, record_start, SEEK_SET);
+
+        write_user(db, &user);
+        fwrite(file_buffer, sizeof(char), leftover, db->users);
+        int current_size = ftell(db->users);
+
+        if (current_size < file_size)
+        {
+            int shrink_result = ftruncate(fileno(db->users), current_size);
+
+            if (shrink_result == -1)
+            {
+                make_unit_failure("Falha ao diminuir o tamanho do arquivo");
+            }
+        }
+
+        *result = make_unit_success();
+    }
+}
+
 // User db_delete_user(Database *db, User *user);
 
 // Order *db_get_orders(Database *db, User *user);
@@ -440,11 +504,18 @@ bool try_parse_user(char *string, User *user)
 
     // Parses the user cpf
     string = try_consume_string(string, user->cpf, CPF_LENGTH);
-    if (string == NULL || *string != '\0')
+    if (string == NULL || *string != FIELD_SEPARATOR)
     {
         return false;
     }
     string++;
+
+    // Parses the user active status
+    string = try_consume_bool(string, &user->active);
+    if (string == NULL || *string != '\n')
+    {
+        return false;
+    }
 
     return true;
 }
@@ -492,6 +563,43 @@ char *try_consume_i64(char *input, long *number)
     }
 
     return end;
+}
+
+char *try_consume_bool(char *buffer, bool *boolean)
+{
+    if (*buffer == 't')
+    {
+        *boolean = true;
+        return try_consume_true(buffer);
+    }
+
+    if (*buffer == 'f')
+    {
+        *boolean = false;
+        return try_consume_false(buffer);
+    }
+
+    return NULL;
+}
+
+char *try_consume_true(char *buffer)
+{
+    if (buffer[0] != 't' || buffer[1] != 'r' || buffer[2] != 'u' || buffer[3] != 'e')
+    {
+        return NULL;
+    }
+
+    return buffer + 4;
+}
+
+char *try_consume_false(char *buffer)
+{
+    if (buffer[0] != 'f' || buffer[1] != 'a' || buffer[2] != 'l' || buffer[3] != 's' || buffer[4] != 'e')
+    {
+        return NULL;
+    }
+
+    return buffer + 5;
 }
 
 void write_separator(FILE *fd)

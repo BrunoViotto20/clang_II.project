@@ -9,6 +9,7 @@ typedef struct User
     long id;
     char name[USER_NAME_LENGTH];
     char cpf[CPF_LENGTH];
+    bool active;
 } User;
 
 typedef struct Product
