@@ -317,7 +317,64 @@ void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
     }
 }
 
-// User db_delete_user(Database *db, User *user);
+void db_delete_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
+{
+    rewind(db->users);
+
+    char buffer[LINE_BUFFER_LENGTH] = {0};
+    while (true)
+    {
+        int record_start = ftell(db->users);
+        char *eof = fgets(buffer, LINE_BUFFER_LENGTH, db->users);
+        if (eof == NULL)
+        {
+            *result = make_unit_failure("Usuário não encontrado");
+            return;
+        }
+
+        User user;
+        bool successful_parse = try_parse_user(buffer, &user);
+        if (!successful_parse)
+        {
+            *result = make_unit_failure("Banco de dados corrompido");
+            return;
+        }
+
+        if (!user.active || strcmp(user.cpf, cpf) != 0)
+        {
+            continue;
+        }
+
+        int record_end = ftell(db->users);
+        fseek(db->users, 0, SEEK_END);
+        int file_size = ftell(db->users);
+
+        fseek(db->users, record_end, SEEK_SET);
+        int leftover = file_size - record_end;
+        char *file_buffer = malloc(sizeof(char) * leftover);
+        int read = fread(file_buffer, sizeof(char), leftover, db->users);
+        if (read != leftover)
+        {
+            make_unit_failure("Falha ao atualizar arquivo");
+        }
+        fseek(db->users, record_start, SEEK_SET);
+
+        fwrite(file_buffer, sizeof(char), leftover, db->users);
+        int current_size = ftell(db->users);
+
+        if (current_size < file_size)
+        {
+            int shrink_result = ftruncate(fileno(db->users), current_size);
+
+            if (shrink_result == -1)
+            {
+                make_unit_failure("Falha ao diminuir o tamanho do arquivo");
+            }
+        }
+
+        *result = make_unit_success();
+    }
+}
 
 // Order *db_get_orders(Database *db, User *user);
 // void db_insert_order(Database *db, Order *order);
