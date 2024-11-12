@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "database.h"
 
@@ -64,21 +66,36 @@ void db_open(DatabaseResult *result)
     Database *db = (Database *)malloc(sizeof(Database));
     if (db == NULL)
     {
-        *result = make_database_failure("Falha ao alocar o handler do banco de dados");
+        *result = make_database_failure("Falha ao alocar o handler do banco de dados\n");
         return;
+    }
+
+    if (access("database", F_OK) == -1)
+    {
+        int mkdir_result = mkdir("database", S_IRWXG | S_IRWXO | S_IRWXU);
+
+        if (mkdir_result == -1)
+        {
+            free(db);
+            *result = make_database_failure("Falha ao criar o diretório do arquivo\n");
+            return;
+        }
     }
 
     db->users = fopen(USERS_PATH, "a+");
     if (db->users == NULL)
     {
-        *result = make_database_failure("Falha ao abrir arquivo");
+        free(db);
+        *result = make_database_failure("Falha ao abrir arquivo\n");
         return;
     }
 
     db->orders = fopen(ORDERS_PATH, "a+");
     if (db->orders == NULL)
     {
-        *result = make_database_failure("Falha ao abrir arquivo");
+        free(db->users);
+        free(db);
+        *result = make_database_failure("Falha ao abrir arquivo\n");
         return;
     }
 
