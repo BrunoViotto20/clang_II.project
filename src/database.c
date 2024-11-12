@@ -356,7 +356,7 @@ bool is_unit_success(UnitResult *result)
 
 Error get_unit_error(UnitResult *result)
 {
-    assert(result->is_success);
+    assert(!result->is_success);
 
     return result->error;
 }
@@ -389,7 +389,7 @@ Database *get_database_value(DatabaseResult *result)
 
 Error get_database_error(DatabaseResult *result)
 {
-    assert(result->is_success);
+    assert(!result->is_success);
 
     return result->error;
 }
@@ -423,7 +423,7 @@ Users get_users_value(UsersResult *result)
 
 Error get_users_error(UsersResult *result)
 {
-    assert(result->is_success);
+    assert(!result->is_success);
 
     return result->error;
 }
@@ -456,7 +456,7 @@ User get_user_value(UserResult *result)
 
 Error get_user_error(UserResult *result)
 {
-    assert(result->is_success);
+    assert(!result->is_success);
 
     return result->error;
 }
@@ -490,7 +490,7 @@ Orders get_orders_value(OrdersResult *result)
 
 Error get_orders_error(OrdersResult *result)
 {
-    assert(result->is_success);
+    assert(!result->is_success);
 
     return result->error;
 }
