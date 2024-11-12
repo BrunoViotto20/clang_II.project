@@ -146,15 +146,15 @@ void db_insert_user(Database *db, User *user, UnitResult *result);
 
 /// @brief Disables a user in the database.
 /// @param db The database connection to be used.
-/// @param user The user to be disabled.
+/// @param cpf The cpf of the user to be disabled.
 /// @param result The result of the disable user operation.
-void db_disable_user(Database *db, User *user, UnitResult *result);
+void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result);
 
 /// @brief Deletes a user from the database.
 /// @param db The database connection to be used.
-/// @param user The user to be deleted.
+/// @param cpf The cpf of the user to be deleted.
 /// @param result The result of the delete user operation.
-void db_delete_user(Database *db, User *user, UnitResult *result);
+void db_delete_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result);
 
 /// @brief Gets all orders from the user.
 /// @param db The database connection to be used.
