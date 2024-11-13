@@ -7,8 +7,8 @@
 typedef struct User
 {
     long id;
-    char name[USER_NAME_LENGTH];
-    char cpf[CPF_LENGTH];
+    char name[USER_NAME_LENGTH + 1];
+    char cpf[CPF_LENGTH + 1];
     bool active;
 } User;
 
