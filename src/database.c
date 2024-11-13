@@ -83,7 +83,7 @@ void db_open(DatabaseResult *result)
         }
     }
 
-    db->users = fopen(USERS_PATH, "a+");
+    db->users = fopen(USERS_PATH, "r+");
     if (db->users == NULL)
     {
         free(db);
@@ -91,7 +91,7 @@ void db_open(DatabaseResult *result)
         return;
     }
 
-    db->orders = fopen(ORDERS_PATH, "a+");
+    db->orders = fopen(ORDERS_PATH, "r+");
     if (db->orders == NULL)
     {
         free(db->users);
@@ -266,6 +266,8 @@ void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
             continue;
         }
 
+        user.active = false;
+
         int record_end = ftell(db->users);
         fseek(db->users, 0, SEEK_END);
         int file_size = ftell(db->users);
@@ -276,13 +278,17 @@ void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
         int read = fread(file_buffer, sizeof(char), leftover, db->users);
         if (read != leftover)
         {
-            make_unit_failure("Falha ao atualizar arquivo");
+            free(file_buffer);
+            *result = make_unit_failure("Falha ao atualizar arquivo");
+            return;
         }
         fseek(db->users, record_start, SEEK_SET);
 
         write_user(db, &user);
         fwrite(file_buffer, sizeof(char), leftover, db->users);
+        fflush(db->users);
         int current_size = ftell(db->users);
+        free(file_buffer);
 
         if (current_size < file_size)
         {
@@ -290,11 +296,13 @@ void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
 
             if (shrink_result == -1)
             {
-                make_unit_failure("Falha ao diminuir o tamanho do arquivo");
+                *result = make_unit_failure("Falha ao diminuir o tamanho do arquivo");
+                return;
             }
         }
 
         *result = make_unit_success();
+        return;
     }
 }
 
@@ -336,12 +344,16 @@ void db_delete_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
         int read = fread(file_buffer, sizeof(char), leftover, db->users);
         if (read != leftover)
         {
-            make_unit_failure("Falha ao atualizar arquivo");
+            free(file_buffer);
+            *result = make_unit_failure("Falha ao atualizar arquivo");
+            return;
         }
         fseek(db->users, record_start, SEEK_SET);
 
         fwrite(file_buffer, sizeof(char), leftover, db->users);
+        fflush(db->users);
         int current_size = ftell(db->users);
+        free(file_buffer);
 
         if (current_size < file_size)
         {
@@ -349,11 +361,13 @@ void db_delete_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
 
             if (shrink_result == -1)
             {
-                make_unit_failure("Falha ao diminuir o tamanho do arquivo");
+                *result = make_unit_failure("Falha ao diminuir o tamanho do arquivo");
+                return;
             }
         }
 
         *result = make_unit_success();
+        return;
     }
 }
 
