@@ -58,8 +58,9 @@ char *try_consume_false(char *buffer);
 bool try_parse_user(char *string, User *user);
 
 void write_separator(FILE *fd);
-
 bool write_user(Database *db, User *user);
+void write_string(FILE *fd, char *string, int length);
+void write_bool(FILE *fd, bool value);
 
 void db_open(DatabaseResult *result)
 {
@@ -173,7 +174,8 @@ void db_get_users(Database *db, UsersResult *result)
 
 void db_get_user(Database *db, char cpf[CPF_LENGTH], UserResult *result)
 {
-    rewind(db->users);
+    fseek(db->users, 0, SEEK_SET);
+    // rewind(db->users);
 
     char buffer[LINE_BUFFER_LENGTH] = {0};
     while (true)
@@ -218,10 +220,18 @@ void db_insert_user(Database *db, User *user, UnitResult *result)
         }
     }
 
+    UserResult user_result;
+    db_get_user(db, user->cpf, &user_result);
+    if (is_user_success(&user_result))
+    {
+        *result = make_unit_failure("CPF já cadastrado no banco de dados\n");
+        return;
+    }
+
     bool success_insert = write_user(db, user);
     if (!success_insert)
     {
-        *result = make_unit_failure("Falha ao inserir o usuário");
+        *result = make_unit_failure("Falha ao inserir o usuário\n");
         return;
     }
 
@@ -523,7 +533,7 @@ bool try_parse_user(char *string, User *user)
     string++;
 
     // Parses the user name
-    string = try_consume_string(string, user->name, USER_NAME_LENGTH);
+    string = try_consume_string(string, user->name, USER_NAME_LENGTH + 1);
     if (string == NULL || *string != FIELD_SEPARATOR)
     {
         return false;
@@ -531,7 +541,7 @@ bool try_parse_user(char *string, User *user)
     string++;
 
     // Parses the user cpf
-    string = try_consume_string(string, user->cpf, CPF_LENGTH);
+    string = try_consume_string(string, user->cpf, CPF_LENGTH + 1);
     if (string == NULL || *string != FIELD_SEPARATOR)
     {
         return false;
@@ -557,7 +567,7 @@ char *try_consume_string(char *input, char *buffer, int buffer_length)
     input++;
 
     int i;
-    for (i = 0; input[i] != '\0' && i < buffer_length - 1 && (buffer[i] != '"' || input[i - 1] == '\\'); i++)
+    for (i = 0; input[i] != '\0' && i < buffer_length - 1 && (input[i] != '"' || input[i - 1] == '\\'); i++)
     {
         buffer[i] = input[i];
     }
@@ -568,7 +578,7 @@ char *try_consume_string(char *input, char *buffer, int buffer_length)
         return NULL;
     }
 
-    return input;
+    return input + i + 1;
 }
 
 char *try_consume_i64(char *input, long *number)
@@ -576,7 +586,7 @@ char *try_consume_i64(char *input, long *number)
     char buffer[LONG_MAX_LENGTH + 1] = {0};
 
     int i;
-    for (i = 0; input[i] != '\0' && (input[i] != FIELD_SEPARATOR || input[i] != RECORD_SEPARATOR) && i < LONG_MAX_LENGTH; i++)
+    for (i = 0; input[i] != '\0' && input[i] != FIELD_SEPARATOR && input[i] != RECORD_SEPARATOR && i < LONG_MAX_LENGTH; i++)
     {
         buffer[i] = input[i];
     }
@@ -587,10 +597,10 @@ char *try_consume_i64(char *input, long *number)
 
     if (buffer == end || *end != '\0')
     {
-        return 0;
+        return NULL;
     }
 
-    return end;
+    return input + strlen(buffer);
 }
 
 char *try_consume_bool(char *buffer, bool *boolean)
@@ -634,6 +644,7 @@ void write_separator(FILE *fd)
 {
     const char buffer[1] = {FIELD_SEPARATOR};
     fwrite(buffer, sizeof(char), 1, fd);
+    fflush(fd);
 }
 
 bool write_user(Database *db, User *user)
@@ -647,11 +658,39 @@ bool write_user(Database *db, User *user)
     FILE *fd = db->users;
     fwrite(id_buffer, sizeof(char), id_length, fd);
     write_separator(fd);
-    fwrite(user->name, sizeof(char), name_length, fd);
+    write_string(fd, user->name, name_length);
     write_separator(fd);
-    fwrite(user->cpf, sizeof(char), CPF_LENGTH, fd);
+    write_string(fd, user->cpf, CPF_LENGTH);
+    write_separator(fd);
+    write_bool(fd, user->active);
     const char buffer[1] = {RECORD_SEPARATOR};
     fwrite(buffer, sizeof(char), 1, fd);
 
+    fflush(fd);
+
     return true;
+}
+
+void write_string(FILE *fd, char *string, int length)
+{
+    const char quote[1] = {'\"'};
+    fwrite(quote, sizeof(char), 1, fd);
+    fwrite(string, sizeof(char), length, fd);
+    fwrite(quote, sizeof(char), 1, fd);
+
+    fflush(fd);
+}
+
+void write_bool(FILE *fd, bool value)
+{
+    if (value)
+    {
+        fwrite("true", sizeof(char), 4, fd);
+    }
+    else
+    {
+        fwrite("false", sizeof(char), 5, fd);
+    }
+
+    fflush(fd);
 }
