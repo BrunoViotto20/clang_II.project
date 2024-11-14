@@ -155,6 +155,11 @@ void db_get_users(Database *db, UsersResult *result)
             *result = make_users_failure("The database is corrupted");
             return;
         }
+
+        if (!users[users_length - 1].active)
+        {
+            users_length--;
+        }
     }
 
     // Shrinks the user buffer to its exact length
