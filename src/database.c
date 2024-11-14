@@ -200,6 +200,11 @@ void db_get_user(Database *db, char cpf[CPF_LENGTH], UserResult *result)
             return;
         }
 
+        if (!user.active)
+        {
+            continue;
+        }
+
         if (strcmp(cpf, user.cpf) != 0)
         {
             continue;
