@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "utils.h"
 #include "database.h"
 
 #define USERS_PATH "database/users.txt"
@@ -23,38 +24,12 @@ struct Database
     FILE *orders;
 };
 
-UnitResult make_unit_success();
-UnitResult make_unit_failure(char *message);
-DatabaseResult make_database_success(Database *database);
-DatabaseResult make_database_failure(char *message);
-UsersResult make_users_success(User *users, long length);
-UsersResult make_users_failure(char *message);
-UserResult make_user_success(User user);
-UserResult make_user_failure(char *message);
-OrdersResult make_orders_success(Order *orders, long length);
-OrdersResult make_orders_failure(char *message);
-
-/// @brief Tries to consume and parse a string, value surrounded by the character \" on both ends.
-/// @param input The string to be consumed and parsed.
-/// @param buffer The buffer to which the consumed string will be written to.
-/// @param buffer_length The length of the buffer being written into.
-/// @return Returns a pointer to the end of the consumed value.
 char *try_consume_string(char *input, char *buffer, int buffer_length);
-
-/// @brief Tris to consume and parse a signed 64 bits number.
-/// @param input The string to be consumed and parsed.
-/// @param number The number parsed from the input string.
-/// @return Returns a pointer to the end of the consumed value.
 char *try_consume_i64(char *input, long *number);
-
 char *try_consume_bool(char *buffer, bool *boolean);
 char *try_consume_true(char *buffer);
 char *try_consume_false(char *buffer);
 
-/// @brief Tries to parse a user.
-/// @param string The string to be parsed.
-/// @param user The user parsed from the string.
-/// @return Returns true if the parse was successful, false otherwise.
 bool try_parse_user(char *string, User *user);
 
 void write_separator(FILE *fd);
@@ -62,13 +37,26 @@ bool write_user(Database *db, User *user);
 void write_string(FILE *fd, char *string, int length);
 void write_bool(FILE *fd, bool value);
 
-void db_open(DatabaseResult *result)
+DatabaseResult make_database_success(Database *database)
+{
+    DatabaseResult result = {true, {database}};
+    return result;
+}
+
+DatabaseResult make_database_failure(char *message)
+{
+    Error error = {message};
+    DatabaseResult result = {false};
+    result.error = error;
+    return result;
+}
+
+DatabaseResult db_open()
 {
     Database *db = (Database *)malloc(sizeof(Database));
     if (db == NULL)
     {
-        *result = make_database_failure("Falha ao alocar o handler do banco de dados\n");
-        return;
+        return make_database_failure("Falha ao alocar o handler do banco de dados\n");
     }
 
     if (access("database", F_OK) == -1)
@@ -78,8 +66,7 @@ void db_open(DatabaseResult *result)
         if (mkdir_result == -1)
         {
             free(db);
-            *result = make_database_failure("Falha ao criar o diretório do arquivo\n");
-            return;
+            return make_database_failure("Falha ao criar o diretório do arquivo\n");
         }
     }
 
@@ -87,8 +74,7 @@ void db_open(DatabaseResult *result)
     if (db->users == NULL)
     {
         free(db);
-        *result = make_database_failure("Falha ao abrir arquivo\n");
-        return;
+        return make_database_failure("Falha ao abrir arquivo\n");
     }
 
     db->orders = fopen(ORDERS_PATH, "r+");
@@ -96,23 +82,22 @@ void db_open(DatabaseResult *result)
     {
         free(db->users);
         free(db);
-        *result = make_database_failure("Falha ao abrir arquivo\n");
-        return;
+        return make_database_failure("Falha ao abrir arquivo\n");
     }
 
-    *result = make_database_success(db);
+    return make_database_success(db);
 }
 
-void db_close(Database *db, UnitResult *result)
+UnitResult db_close(Database *db)
 {
     fclose(db->users);
     fclose(db->orders);
     free(db);
 
-    *result = make_unit_success();
+    return make_unit_success();
 }
 
-void db_get_users(Database *db, UsersResult *result)
+UsersResult db_get_users(Database *db)
 {
     rewind(db->users);
 
@@ -140,8 +125,7 @@ void db_get_users(Database *db, UsersResult *result)
             if (users == NULL)
             {
                 free(users);
-                *result = make_users_failure("No memory to reallocate");
-                return;
+                return make_users_failure("No memory to reallocate");
             }
             users = temp;
         }
@@ -152,8 +136,7 @@ void db_get_users(Database *db, UsersResult *result)
         if (!successful_parse)
         {
             free(users);
-            *result = make_users_failure("The database is corrupted");
-            return;
+            return make_users_failure("The database is corrupted");
         }
 
         if (!users[users_length - 1].active)
@@ -168,16 +151,16 @@ void db_get_users(Database *db, UsersResult *result)
         User *temp = realloc(users, sizeof(User) * users_length);
         if (users == NULL)
         {
-            *result = make_users_failure("No memory to reallocate");
-            return;
+            return make_users_failure("No memory to reallocate");
         }
         users = temp;
     }
 
-    *result = make_users_success(users, users_length);
+    Users usrs = {users, users_length};
+    return make_users_success(usrs);
 }
 
-void db_get_user(Database *db, char cpf[CPF_LENGTH], UserResult *result)
+UserResult db_get_user(Database *db, char cpf[CPF_LENGTH])
 {
     fseek(db->users, 0, SEEK_SET);
     // rewind(db->users);
@@ -188,16 +171,14 @@ void db_get_user(Database *db, char cpf[CPF_LENGTH], UserResult *result)
         char *eof = fgets(buffer, LINE_BUFFER_LENGTH, db->users);
         if (eof == NULL)
         {
-            *result = make_user_failure("Nenhum usuário encontrado!");
-            return;
+            return make_user_failure("Nenhum usuário encontrado!");
         }
 
         User user;
         bool successful_parse = try_parse_user(buffer, &user);
         if (!successful_parse)
         {
-            *result = make_user_failure("Banco de dados corrompido");
-            return;
+            return make_user_failure("Banco de dados corrompido");
         }
 
         if (!user.active)
@@ -210,12 +191,11 @@ void db_get_user(Database *db, char cpf[CPF_LENGTH], UserResult *result)
             continue;
         }
 
-        *result = make_user_success(user);
-        return;
+        return make_user_success(user);
     }
 }
 
-void db_insert_user(Database *db, User *user, UnitResult *result)
+UnitResult db_insert_user(Database *db, User *user)
 {
     fseek(db->users, 0, SEEK_END);
 
@@ -230,25 +210,22 @@ void db_insert_user(Database *db, User *user, UnitResult *result)
         }
     }
 
-    UserResult user_result;
-    db_get_user(db, user->cpf, &user_result);
-    if (is_user_success(&user_result))
+    UserResult user_result = db_get_user(db, user->cpf);
+    if (user_result.is_success)
     {
-        *result = make_unit_failure("CPF já cadastrado no banco de dados\n");
-        return;
+        return make_unit_failure("CPF já cadastrado no banco de dados\n");
     }
 
     bool success_insert = write_user(db, user);
     if (!success_insert)
     {
-        *result = make_unit_failure("Falha ao inserir o usuário\n");
-        return;
+        return make_unit_failure("Falha ao inserir o usuário\n");
     }
 
-    *result = make_unit_success();
+    return make_unit_success();
 }
 
-void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
+UnitResult db_disable_user(Database *db, char cpf[CPF_LENGTH])
 {
     rewind(db->users);
 
@@ -259,16 +236,14 @@ void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
         char *eof = fgets(buffer, LINE_BUFFER_LENGTH, db->users);
         if (eof == NULL)
         {
-            *result = make_unit_failure("Usuário não encontrado");
-            return;
+            return make_unit_failure("Usuário não encontrado");
         }
 
         User user;
         bool successful_parse = try_parse_user(buffer, &user);
         if (!successful_parse)
         {
-            *result = make_unit_failure("Banco de dados corrompido");
-            return;
+            return make_unit_failure("Banco de dados corrompido");
         }
 
         if (!user.active || strcmp(user.cpf, cpf) != 0)
@@ -289,8 +264,7 @@ void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
         if (read != leftover)
         {
             free(file_buffer);
-            *result = make_unit_failure("Falha ao atualizar arquivo");
-            return;
+            return make_unit_failure("Falha ao atualizar arquivo");
         }
         fseek(db->users, record_start, SEEK_SET);
 
@@ -306,17 +280,15 @@ void db_disable_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
 
             if (shrink_result == -1)
             {
-                *result = make_unit_failure("Falha ao diminuir o tamanho do arquivo");
-                return;
+                return make_unit_failure("Falha ao diminuir o tamanho do arquivo");
             }
         }
 
-        *result = make_unit_success();
-        return;
+        return make_unit_success();
     }
 }
 
-void db_delete_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
+UnitResult db_delete_user(Database *db, char cpf[CPF_LENGTH])
 {
     rewind(db->users);
 
@@ -327,16 +299,14 @@ void db_delete_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
         char *eof = fgets(buffer, LINE_BUFFER_LENGTH, db->users);
         if (eof == NULL)
         {
-            *result = make_unit_failure("Usuário não encontrado");
-            return;
+            return make_unit_failure("Usuário não encontrado");
         }
 
         User user;
         bool successful_parse = try_parse_user(buffer, &user);
         if (!successful_parse)
         {
-            *result = make_unit_failure("Banco de dados corrompido");
-            return;
+            return make_unit_failure("Banco de dados corrompido");
         }
 
         if (!user.active || strcmp(user.cpf, cpf) != 0)
@@ -355,8 +325,7 @@ void db_delete_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
         if (read != leftover)
         {
             free(file_buffer);
-            *result = make_unit_failure("Falha ao atualizar arquivo");
-            return;
+            return make_unit_failure("Falha ao atualizar arquivo");
         }
         fseek(db->users, record_start, SEEK_SET);
 
@@ -371,13 +340,11 @@ void db_delete_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
 
             if (shrink_result == -1)
             {
-                *result = make_unit_failure("Falha ao diminuir o tamanho do arquivo");
-                return;
+                return make_unit_failure("Falha ao diminuir o tamanho do arquivo");
             }
         }
 
-        *result = make_unit_success();
-        return;
+        return make_unit_success();
     }
 }
 
@@ -385,166 +352,6 @@ void db_delete_user(Database *db, char cpf[CPF_LENGTH], UnitResult *result)
 // void db_insert_order(Database *db, Order *order);
 
 /* Private functions */
-
-UnitResult make_unit_success()
-{
-    UnitResult result = {true, {NULL}};
-    return result;
-}
-
-UnitResult make_unit_failure(char *message)
-{
-    Error error = {message};
-    UnitResult result = {false};
-    result.error = error;
-    return result;
-}
-
-bool is_unit_success(UnitResult *result)
-{
-    return result->is_success;
-}
-
-Error get_unit_error(UnitResult *result)
-{
-    assert(!result->is_success);
-
-    return result->error;
-}
-
-DatabaseResult make_database_success(Database *database)
-{
-    DatabaseResult result = {true, {database}};
-    return result;
-}
-
-DatabaseResult make_database_failure(char *message)
-{
-    Error error = {message};
-    DatabaseResult result = {false};
-    result.error = error;
-    return result;
-}
-
-bool is_database_success(DatabaseResult *result)
-{
-    return result->is_success;
-}
-
-Database *get_database_value(DatabaseResult *result)
-{
-    assert(result->is_success);
-
-    return result->database;
-}
-
-Error get_database_error(DatabaseResult *result)
-{
-    assert(!result->is_success);
-
-    return result->error;
-}
-
-UsersResult make_users_success(User *users, long length)
-{
-    Users usrs = {users, length};
-    UsersResult result = {true, {usrs}};
-    return result;
-}
-
-UsersResult make_users_failure(char *message)
-{
-    Error error = {message};
-    UsersResult result = {false};
-    result.error = error;
-    return result;
-}
-
-bool is_users_success(UsersResult *result)
-{
-    return result->is_success;
-}
-
-Users get_users_value(UsersResult *result)
-{
-    assert(result->is_success);
-
-    return result->users;
-}
-
-Error get_users_error(UsersResult *result)
-{
-    assert(!result->is_success);
-
-    return result->error;
-}
-
-UserResult make_user_success(User user)
-{
-    UserResult result = {true, {user}};
-    return result;
-}
-
-UserResult make_user_failure(char *message)
-{
-    Error error = {message};
-    UserResult result = {false};
-    result.error = error;
-    return result;
-}
-
-bool is_user_success(UserResult *result)
-{
-    return result->is_success;
-}
-
-User get_user_value(UserResult *result)
-{
-    assert(result->is_success);
-
-    return result->user;
-}
-
-Error get_user_error(UserResult *result)
-{
-    assert(!result->is_success);
-
-    return result->error;
-}
-
-OrdersResult make_orders_success(Order *orders, long length)
-{
-    Orders ordrs = {orders, length};
-    OrdersResult result = {true, {ordrs}};
-    return result;
-}
-
-OrdersResult make_orders_failure(char *message)
-{
-    Error error = {message};
-    OrdersResult result = {false};
-    result.error = error;
-    return result;
-}
-
-bool is_orders_success(OrdersResult *result)
-{
-    return result->is_success;
-}
-
-Orders get_orders_value(OrdersResult *result)
-{
-    assert(result->is_success);
-
-    return result->orders;
-}
-
-Error get_orders_error(OrdersResult *result)
-{
-    assert(!result->is_success);
-
-    return result->error;
-}
 
 bool try_parse_user(char *string, User *user)
 {
