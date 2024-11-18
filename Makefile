@@ -4,7 +4,7 @@ BIN_DIR=bin
 SRC_DIR=src
 INCLUDE_DIR=includes
 SRC=$(SRC_DIR)/main.c
-LIB=console.c lanchonete.c database.c
+LIB=console.c lanchonete.c database.c utils.c
 OBJ=$(addprefix $(OBJ_DIR), $(LIB:.c=.o))
 EXE=$(BIN_DIR)/$(shell basename $(SRC:.c=))
 
