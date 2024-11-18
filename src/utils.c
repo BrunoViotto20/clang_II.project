@@ -15,3 +15,17 @@ UnitResult make_unit_failure(char *message)
     result.error = error;
     return result;
 }
+
+I64Result make_i64_success(long number)
+{
+    I64Result result = {true, {number}};
+    return result;
+}
+
+I64Result make_i64_failure(char *message)
+{
+    Error error = {message};
+    I64Result result = {false};
+    result.error = error;
+    return result;
+}

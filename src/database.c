@@ -10,8 +10,11 @@
 #include "utils.h"
 #include "database.h"
 
+// File paths
 #define USERS_PATH "database/users.txt"
 #define ORDERS_PATH "database/orders.txt"
+
+#define USERS_INDEX_PATH "database/users_index.txt"
 
 #define FIELD_SEPARATOR ';'
 #define RECORD_SEPARATOR '\n'
@@ -21,6 +24,7 @@
 struct Database
 {
     FILE *users;
+    FILE *users_index;
     FILE *orders;
 };
 
@@ -36,6 +40,10 @@ void write_separator(FILE *fd);
 bool write_user(Database *db, User *user);
 void write_string(FILE *fd, char *string, int length);
 void write_bool(FILE *fd, bool value);
+
+UnitResult ensure_directory_exists(char *directory_path);
+
+I64Result get_next_user_id(Database *db);
 
 DatabaseResult make_database_success(Database *database)
 {
@@ -59,17 +67,15 @@ DatabaseResult db_open()
         return make_database_failure("Falha ao alocar o handler do banco de dados\n");
     }
 
-    if (access("database", F_OK) == -1)
+    UnitResult dir_result = ensure_directory_exists("database");
+    if (!dir_result.is_success)
     {
-        int mkdir_result = mkdir("database", S_IRWXG | S_IRWXO | S_IRWXU);
-
-        if (mkdir_result == -1)
-        {
-            free(db);
-            return make_database_failure("Falha ao criar o diretório do arquivo\n");
-        }
+        free(db);
+        return make_database_failure("Falha ao criar o diretório do arquivo\n");
     }
 
+    db->users = fopen(USERS_PATH, "a");
+    fclose(db->users);
     db->users = fopen(USERS_PATH, "r+");
     if (db->users == NULL)
     {
@@ -77,9 +83,22 @@ DatabaseResult db_open()
         return make_database_failure("Falha ao abrir arquivo\n");
     }
 
+    db->orders = fopen(ORDERS_PATH, "a");
+    fclose(db->orders);
     db->orders = fopen(ORDERS_PATH, "r+");
     if (db->orders == NULL)
     {
+        free(db->users);
+        free(db);
+        return make_database_failure("Falha ao abrir arquivo\n");
+    }
+
+    db->users_index = fopen(USERS_INDEX_PATH, "a");
+    fclose(db->users_index);
+    db->users_index = fopen(USERS_INDEX_PATH, "r+");
+    if (db->users_index == NULL)
+    {
+        free(db->orders);
         free(db->users);
         free(db);
         return make_database_failure("Falha ao abrir arquivo\n");
@@ -92,6 +111,7 @@ UnitResult db_close(Database *db)
 {
     fclose(db->users);
     fclose(db->orders);
+    fclose(db->users_index);
     free(db);
 
     return make_unit_success();
@@ -162,8 +182,7 @@ UsersResult db_get_users(Database *db)
 
 UserResult db_get_user(Database *db, char cpf[CPF_LENGTH])
 {
-    fseek(db->users, 0, SEEK_SET);
-    // rewind(db->users);
+    rewind(db->users);
 
     char buffer[LINE_BUFFER_LENGTH] = {0};
     while (true)
@@ -215,6 +234,13 @@ UnitResult db_insert_user(Database *db, User *user)
     {
         return make_unit_failure("CPF já cadastrado no banco de dados\n");
     }
+
+    I64Result nextIdResult = get_next_user_id(db);
+    if (!nextIdResult.is_success)
+    {
+        return make_unit_failure(nextIdResult.error.message);
+    }
+    user->id = nextIdResult.value;
 
     bool success_insert = write_user(db, user);
     if (!success_insert)
@@ -524,4 +550,50 @@ void write_bool(FILE *fd, bool value)
     }
 
     fflush(fd);
+}
+
+UnitResult ensure_directory_exists(char *directory_path)
+{
+    // If directory exists, return
+    if (access(directory_path, F_OK) != -1)
+    {
+        return make_unit_success();
+    }
+
+    int mkdir_result = mkdir(directory_path, S_IRWXG | S_IRWXO | S_IRWXU);
+    if (mkdir_result == -1)
+    {
+        return make_unit_failure("Falha ao criar o diretório do arquivo\n");
+    }
+
+    return make_unit_success();
+}
+
+I64Result get_next_user_id(Database *db)
+{
+    rewind(db->users_index);
+    char buffer[LONG_MAX_LENGTH + 1] = {0};
+
+    char *eof = fgets(buffer, LONG_MAX_LENGTH + 1, db->users_index);
+
+    if (eof == NULL)
+    {
+        rewind(db->users_index);
+        fwrite("1", sizeof(char), 1, db->users_index);
+        buffer[0] = '1';
+        buffer[1] = '\0';
+    }
+
+    char *end;
+    long number = strtol(buffer, &end, 10);
+
+    if (*end != '\0')
+    {
+        return make_i64_failure("Falha ao ler o index do usuário");
+    }
+
+    rewind(db->users_index);
+    fprintf(db->users_index, "%ld", number + 1);
+
+    return make_i64_success(number);
 }
