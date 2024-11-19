@@ -4,6 +4,48 @@
 #include "console.h"
 #include "lanchonete.h"
 
+UserResult make_user_success(User user)
+{
+    UserResult result = {true, {user}};
+    return result;
+}
+
+UserResult make_user_failure(char *message)
+{
+    Error error = {message};
+    UserResult result = {false};
+    result.error = error;
+    return result;
+}
+
+UsersResult make_users_success(Users users)
+{
+    UsersResult result = {true, {users}};
+    return result;
+}
+
+UsersResult make_users_failure(char *message)
+{
+    Error error = {message};
+    UsersResult result = {false};
+    result.error = error;
+    return result;
+}
+
+OrdersResult make_orders_success(Orders orders)
+{
+    OrdersResult result = {true, {orders}};
+    return result;
+}
+
+OrdersResult make_orders_failure(char *message)
+{
+    Error error = {message};
+    OrdersResult result = {false};
+    result.error = error;
+    return result;
+}
+
 Product products_menu(const Product *products, int length, int age)
 {
     while (true)
