@@ -142,7 +142,7 @@ UsersResult db_get_users(Database *db)
         {
             users_capacity *= 2;
             User *temp = realloc(users, sizeof(User) * users_capacity);
-            if (users == NULL)
+            if (temp == NULL)
             {
                 free(users);
                 return make_users_failure("No memory to reallocate");
@@ -180,7 +180,7 @@ UsersResult db_get_users(Database *db)
     return make_users_success(usrs);
 }
 
-UserResult db_get_user(Database *db, char cpf[CPF_LENGTH])
+UserResult db_get_user(Database *db, char cpf[CPF_LENGTH + 1])
 {
     rewind(db->users);
 

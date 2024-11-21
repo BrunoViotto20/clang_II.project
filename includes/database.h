@@ -48,7 +48,7 @@ UsersResult db_get_users(Database *db);
 /// @param db The database connection to be used.
 /// @param cpf The user CPF to be queried for.
 /// @param result The result of the get user operation.
-UserResult db_get_user(Database *db, char cpf[CPF_LENGTH]);
+UserResult db_get_user(Database *db, char cpf[CPF_LENGTH + 1]);
 
 /// @brief Inserts a user in the database.
 /// @param db The database connection to be used.

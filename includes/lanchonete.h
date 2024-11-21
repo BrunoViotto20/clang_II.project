@@ -7,11 +7,14 @@
 #define USER_NAME_LENGTH 64
 #define CPF_LENGTH 11
 
+typedef struct Database Database;
+
 typedef struct User
 {
     long id;
     char name[USER_NAME_LENGTH + 1];
     char cpf[CPF_LENGTH + 1];
+    int age;
     bool active;
 } User;
 
@@ -117,7 +120,6 @@ OrdersResult make_orders_success(Orders orders);
 /// @return Returns a failure result.
 OrdersResult make_orders_failure(char *message);
 
-Product products_menu(const Product *products, int length, int age);
-PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length);
+bool menu_principal(Database *connection);
 
 #endif
