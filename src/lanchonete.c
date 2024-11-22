@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "console.h"
 #include "lanchonete.h"
@@ -12,6 +13,8 @@ int get_age();
 int get_amount();
 void cadastrar_usuario();
 void fazer_pedido();
+void delete_user(Database *connection);
+void disable_user(Database *connection);
 bool is_cpf(char *string);
 
 UserResult make_user_success(User user)
@@ -58,15 +61,15 @@ OrdersResult make_orders_failure(char *message)
 bool menu_principal(Database *connection)
 {
     int op;
-    printf("1- Cadastrar \n2- Fazer Pedido \n3- Desabilitar Usuário \n4- Deletar Usuário \n5- Listar Usuários \n6- Listar Pedidos do Usuário \n7- Sair");
-    printf("\nDigite a opção desejada: ");
-    int result = scanf("%d",&op);
+    printf("\n1- Cadastrar \n2- Fazer Pedido \n3- Desabilitar Usuário \n4- Deletar Usuário \n5- Listar Usuários \n6- Listar Pedidos do Usuário \n7- Sair");
+    printf("\n\nDigite a opção desejada: ");
+    int result = scanf("%d", &op);
     if (result != 1)
     {
         printf("Opção inválida! tente novamente...");
         return false;
     }
-    
+
     switch (op)
     {
     case 7:
@@ -77,6 +80,12 @@ bool menu_principal(Database *connection)
     case 2:
         fazer_pedido();
         break;
+    case 3:
+        disable_user(connection);
+        break;
+    case 4:
+        delete_user(connection);
+        break;
     }
 
     return false;
@@ -86,11 +95,12 @@ void cadastrar_usuario(Database *connection)
 {
     User user;
     user.active = true;
-    printf("Digite o seu CPF: ");
-    get_cpf(user.cpf);
 
-    printf("Digite sua idade: ");
+    printf("\n");
+    get_cpf(user.cpf);
     user.age = get_age();
+
+    scanf("%*c");
 
     printf("Digite o seu nome: ");
     char *buffer = fgets(user.name, USER_NAME_LENGTH + 1, stdin);
@@ -98,6 +108,11 @@ void cadastrar_usuario(Database *connection)
     {
         perror("Falha ao ler o nome do usuario\n");
         return;
+    }
+    int name_length = strlen(user.name);
+    if (user.name[name_length - 1] == '\n')
+    {
+        user.name[name_length - 1] = '\0';
     }
 
     UnitResult user_insert = db_insert_user(connection, &user);
@@ -118,13 +133,11 @@ void fazer_pedido()
         {"Cerveja Brahma", 6, true},
         {"Cigarro Malboro", 6, true}};
     const int products_length = sizeof(products) / sizeof(Product);
-
     const PaymentMethod payment_methods[] = {
         {"Crédito", .02},
         {"Débito", .02},
         {"Dinheiro", 0}};
     const int payment_methods_length = sizeof(payment_methods) / sizeof(PaymentMethod);
-
     // pedir cpf
     // db.get.user
 
@@ -224,6 +237,7 @@ void get_cpf(char *cpf)
 {
     while (true)
     {
+        scanf("%*c");
         printf("Digite o seu cpf: ");
         char *buffer = fgets(cpf, CPF_LENGTH + 1, stdin);
 
@@ -282,5 +296,33 @@ int get_amount()
         }
 
         return amount;
+    }
+}
+
+void delete_user(Database *connection)
+{
+    char cpf[CPF_LENGTH + 1] = {0};
+    get_cpf(cpf);
+
+    UnitResult user_delete_result = db_delete_user(connection, cpf);
+
+    if (!user_delete_result.is_success)
+    {
+        perror(user_delete_result.error.message);
+        return;
+    }
+}
+
+void disable_user(Database *connection)
+{
+   char cpf[CPF_LENGTH + 1] = {0};
+    get_cpf(cpf);
+
+    UnitResult user_desable_result = db_disable_user(connection, cpf);
+
+    if (!user_desable_result.is_success)
+    {
+        perror(user_desable_result.error.message);
+        return;
     }
 }

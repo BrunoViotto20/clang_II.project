@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -g -O2
+CFLAGS=-Wall -Wextra -g
 BIN_DIR=bin
 SRC_DIR=src
 INCLUDE_DIR=includes
