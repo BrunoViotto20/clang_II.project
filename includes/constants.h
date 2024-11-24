@@ -1,0 +1,10 @@
+#ifndef __CONSTANTS_H__
+#define __CONSTANTS_H__
+
+#define USER_NAME_LENGTH 64
+#define CPF_LENGTH 11
+#define PRODUCT_NAME_LENGTH 32
+#define PAYMENT_METHOD_NAME_LENGTH 32
+#define LONG_MAX_LENGTH 19
+
+#endif
