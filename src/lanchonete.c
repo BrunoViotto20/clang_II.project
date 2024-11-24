@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "console.h"
@@ -8,15 +9,21 @@
 #include "result.h"
 
 PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length);
-Product products_menu(const Product *products, int length, int age);
+Product products_menu(const Product *products, int length, User *user);
 void get_cpf(char cpf[CPF_LENGTH + 1]);
 int get_age();
 int get_amount();
-void fazer_pedido();
+void fazer_pedido(Database *connection);
 void cadastrar_usuario(Database *connection);
 void delete_user(Database *connection);
 void disable_user(Database *connection);
+void list_users(Database *connection);
 bool is_cpf(char string[CPF_LENGTH + 1]);
+long sort_user_age(void *buffer, long length);
+long sort_user_name(void *buffer, long length);
+// void quick_sort(User *users, long length);
+void quick_sort(void *array, int size, long length, long (*f)(void *, long length));
+void print_user(User user);
 
 bool menu_principal(Database *connection)
 {
@@ -45,13 +52,16 @@ bool menu_principal(Database *connection)
         cadastrar_usuario(connection);
         break;
     case 2:
-        fazer_pedido();
+        fazer_pedido(connection);
         break;
     case 3:
         disable_user(connection);
         break;
     case 4:
         delete_user(connection);
+        break;
+    case 5:
+        list_users(connection);
         break;
     }
 
@@ -92,7 +102,7 @@ void cadastrar_usuario(Database *connection)
     }
 }
 
-void fazer_pedido()
+void fazer_pedido(Database *connection)
 {
     const Product products[] = {
         {"Cachorro Quente", 12, false},
@@ -103,17 +113,25 @@ void fazer_pedido()
         {"Cerveja Brahma", 6, true},
         {"Cigarro Malboro", 6, true}};
     const int products_length = sizeof(products) / sizeof(Product);
+
     const PaymentMethod payment_methods[] = {
         {"Crédito", .02},
         {"Débito", .02},
         {"Dinheiro", 0}};
     const int payment_methods_length = sizeof(payment_methods) / sizeof(PaymentMethod);
-    // pedir cpf
-    // db.get.user
 
-    int age = get_age();
+    char cpf[CPF_LENGTH + 1];
+    get_cpf(cpf);
 
-    Product product = products_menu(products, products_length, age);
+    UserResult get_user_result = db_get_user(connection, cpf);
+    if (!get_user_result.is_success)
+    {
+        perror(get_user_result.error.message);
+        return;
+    }
+    User user = get_user_result.user;
+
+    Product product = products_menu(products, products_length, &user);
 
     int amount = get_amount();
 
@@ -121,15 +139,104 @@ void fazer_pedido()
 
     if (payment_method.fee != 0)
     {
-        printf("Taxa de %.1lf%%, sobre o valor da compra:\n", payment_method.fee * 100);
+        printf("Taxa de %.1lf%%, sobre o valor da compra\n", payment_method.fee * 100);
     }
 
     double total_price = amount * product.price;
     double final_price = total_price * (1 + payment_method.fee);
-    printf("O valor total é: R$%.2f\n", final_price);
+    printf("O valor total é de R$%.2f\n", final_price);
+
+    int _ = scanf("%*c");
+    (void)_;
+
+    printf("Confirmar pedido? [S/N] ");
+    char confirmation;
+    int matches = scanf("%c", &confirmation);
+
+    if (matches != 1)
+    {
+        printf("Confirmação inválida! Cancelando pedido...\n");
+        wait_key_press();
+        return;
+    }
+
+    Order order = {
+        product,
+        payment_method,
+        user.id};
+
+    if (confirmation == 'S' || confirmation == 's')
+    {
+        UnitResult insert_order_result = db_insert_order(connection, cpf, &order);
+        if (!insert_order_result.is_success)
+        {
+            perror(insert_order_result.error.message);
+            return;
+        }
+        printf("Pedido realizado com sucesso!\n");
+        wait_key_press();
+        return;
+    }
+
+    if (confirmation == 'N' || confirmation == 'n')
+    {
+        printf("Pedido cancelado\n");
+        wait_key_press();
+        return;
+    }
+
+    printf("Confirmação inválida! Cancelando pedido...\n");
+    wait_key_press();
 }
 
-Product products_menu(const Product *products, int length, int age)
+void list_users(Database *connection)
+{
+    UsersResult get_users_result = db_get_users(connection);
+    if (!get_users_result.is_success)
+    {
+        perror(get_users_result.error.message);
+        return;
+    }
+    Users users = get_users_result.users;
+
+    printf("[ 1 ] Nome\n");
+    printf("[ 2 ] Idade\n");
+    printf("Escolha o método de ordenação: ");
+    int option;
+    int matches = scanf("%d", &option);
+    if (matches != 1)
+    {
+        free(users.values);
+        printf("Método de ordenação inválido! Tente novamente");
+        return;
+    }
+
+    switch (option)
+    {
+    case 1:
+        quick_sort(users.values, sizeof(User), users.length, sort_user_name);
+        break;
+    case 2:
+        quick_sort(users.values, sizeof(User), users.length, sort_user_age);
+        break;
+    default:
+        printf("Método de ordenação inválido!");
+        break;
+    }
+
+    printf("\n");
+    for (int i = 0; i < users.length; i++)
+    {
+        printf("CLIENTE %d\n", i + 1);
+        print_user(users.values[i]);
+        printf("\n");
+    }
+
+    free(users.values);
+    wait_key_press();
+}
+
+Product products_menu(const Product *products, int length, User *user)
 {
     while (true)
     {
@@ -156,7 +263,7 @@ Product products_menu(const Product *products, int length, int age)
 
         Product product = products[option - 1];
 
-        if (product.is_adult && age < 18)
+        if (product.is_adult && user->age < 18)
         {
             clear_console();
             printf("Venda proibida para menores de 18 anos!\n");
@@ -227,6 +334,10 @@ void get_cpf(char cpf[CPF_LENGTH + 1])
 
 bool is_cpf(char string[CPF_LENGTH + 1])
 {
+#if DEBUG
+    return true;
+#endif
+
     int soma = 0;
     for (int i = 0; i < 9; i++)
     {
@@ -340,4 +451,75 @@ void disable_user(Database *connection)
         perror(user_desable_result.error.message);
         return;
     }
+}
+
+long sort_user_name(void *buffer, long length)
+{
+    User *array = (User *)buffer;
+    User pivot = array[length - 1];
+    long low = 0;
+
+    for (long i = 0; i < length - 1; i++)
+    {
+        if (strcmp(array[i].name, pivot.name) > 0)
+        {
+            continue;
+        }
+
+        User temp = array[i];
+        array[i] = array[low];
+        array[low] = temp;
+        low++;
+    }
+
+    User temp = array[low];
+    array[low] = pivot;
+    array[length - 1] = temp;
+    return low;
+}
+
+long sort_user_age(void *buffer, long length)
+{
+    User *array = (User *)buffer;
+    User pivot = array[length - 1];
+    long low = 0;
+
+    for (long i = 0; i < length - 1; i++)
+    {
+        if (array[i].age >= pivot.age)
+        {
+            continue;
+        }
+
+        User temp = array[i];
+        array[i] = array[low];
+        array[low] = temp;
+        low++;
+    }
+
+    User temp = array[low];
+    array[low] = pivot;
+    array[length - 1] = temp;
+    return low;
+}
+
+void quick_sort(void *array, int size, long length, long (*f)(void *, long length))
+{
+    if (length <= 1)
+    {
+        return;
+    }
+
+    long index = f(array, length);
+    // long index = partition(array, length);
+
+    quick_sort(array, size, index, f);
+    quick_sort(array + (index + 1) * size, size, length - index - 1, f);
+}
+
+void print_user(User user)
+{
+    printf("Nome: %s\n", user.name);
+    printf("CPF: %s\n", user.cpf);
+    printf("Idade: %d\n", user.age);
 }
