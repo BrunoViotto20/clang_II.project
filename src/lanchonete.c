@@ -21,8 +21,15 @@ bool is_cpf(char *string);
 bool menu_principal(Database *connection)
 {
     int op;
-    printf("\n1- Cadastrar \n2- Fazer Pedido \n3- Desabilitar Usuário \n4- Deletar Usuário \n5- Listar Usuários \n6- Listar Pedidos do Usuário \n7- Sair");
-    printf("\n\nDigite a opção desejada: ");
+    printf("[ 1 ] Cadastrar\n");
+    printf("[ 2 ] Fazer Pedido\n");
+    printf("[ 3 ] Desabilitar Usuário\n");
+    printf("[ 4 ] Deletar Usuário\n");
+    printf("[ 5 ] Listar Usuários\n");
+    printf("[ 6 ] Listar Pedidos do Usuário\n");
+    printf("[ 7 ] Sair\n");
+    
+    printf("Digite a opção desejada: ");
     int result = scanf("%d", &op);
     if (result != 1)
     {
