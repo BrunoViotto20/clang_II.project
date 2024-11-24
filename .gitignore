@@ -9,4 +9,9 @@ database/
 
 .vs/
 .idea/
-.vscode/
+.vscode/**
+
+## Run code configuration
+
+!.vscode/launch.json
+!.vscode/tasks.json
