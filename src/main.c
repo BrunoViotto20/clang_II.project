@@ -1,11 +1,14 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <locale.h>
 
 #include "lanchonete.h"
 #include "database.h"
 
 int main(void)
 {
+    setlocale(LC_ALL, "pt-BR");
+
     DatabaseResult open_result = db_open();
     if (!open_result.is_success)
     {
