@@ -3,8 +3,9 @@
 #include <string.h>
 
 #include "console.h"
-#include "lanchonete.h"
 #include "database.h"
+#include "lanchonete.h"
+#include "result.h"
 
 PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length);
 Product products_menu(const Product *products, int length, int age);
@@ -16,62 +17,6 @@ void fazer_pedido();
 void delete_user(Database *connection);
 void disable_user(Database *connection);
 bool is_cpf(char *string);
-
-UserResult make_user_success(User user)
-{
-    UserResult result = {true, {user}};
-    return result;
-}
-
-UserResult make_user_failure(char *message)
-{
-    Error error = {message};
-    UserResult result = {false};
-    result.error = error;
-    return result;
-}
-
-UsersResult make_users_success(Users users)
-{
-    UsersResult result = {true, {users}};
-    return result;
-}
-
-UsersResult make_users_failure(char *message)
-{
-    Error error = {message};
-    UsersResult result = {false};
-    result.error = error;
-    return result;
-}
-
-OrderResult make_order_success(Order order)
-{
-    OrderResult result = {true, {order}};
-    return result;
-}
-
-OrderResult make_order_failure(char *message)
-{
-    Error error = {message};
-    OrderResult result = {false};
-    result.error = error;
-    return result;
-}
-
-OrdersResult make_orders_success(Orders orders)
-{
-    OrdersResult result = {true, {orders}};
-    return result;
-}
-
-OrdersResult make_orders_failure(char *message)
-{
-    Error error = {message};
-    OrdersResult result = {false};
-    result.error = error;
-    return result;
-}
 
 bool menu_principal(Database *connection)
 {

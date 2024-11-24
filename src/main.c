@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <locale.h>
 
-#include "lanchonete.h"
 #include "database.h"
+#include "lanchonete.h"
+#include "result.h"
 
 int main(void)
 {

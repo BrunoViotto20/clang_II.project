@@ -2,147 +2,66 @@
 #define __LANCHONETE_H__
 
 #include <stdbool.h>
-#include "utils.h"
-
-#define USER_NAME_LENGTH 64
-#define CPF_LENGTH 11
-#define PRODUCT_NAME_LENGTH 32
-#define PAYMENT_METHOD_NAME_LENGTH 32
+#include "constants.h"
 
 typedef struct Database Database;
 
-typedef struct User
+typedef struct User User;
+typedef struct Product Product;
+typedef struct PaymentMethod PaymentMethod;
+typedef struct Order Order;
+
+typedef struct Users Users;
+typedef struct Orders Orders;
+
+struct User
 {
     long id;
     char name[USER_NAME_LENGTH + 1];
     char cpf[CPF_LENGTH + 1];
     int age;
     bool active;
-} User;
+};
 
-typedef struct Product
+struct Product
 {
     char name[PRODUCT_NAME_LENGTH + 1];
     double price;
     bool is_adult;
-} Product;
+};
 
-typedef struct PaymentMethod
+struct PaymentMethod
 {
     char name[PAYMENT_METHOD_NAME_LENGTH + 1];
     double fee;
-} PaymentMethod;
+};
 
-typedef struct Order
+struct Order
 {
     Product product;
     PaymentMethod payment_method;
     long user_id;
-} Order;
+};
 
 /// @brief Represents a finite collection of users.
-typedef struct Users
+struct Users
 {
     /// @brief The users of the collection.
     User *values;
 
     /// @brief The length of the collection.
     long length;
-} Users;
+};
 
 /// @brief Respresents a finite collection of orders.
-typedef struct Orders
+struct Orders
 {
     /// @brief The orders of the collection.
     Order *values;
 
     /// @brief The length of the collection.
     long length;
-} Orders;
-
-/// @brief Represents a result which may return a user or an error.
-typedef struct
-{
-    bool is_success;
-    union
-    {
-        User user;
-        Error error;
-    };
-} UserResult;
-
-/// @brief Creates a user success.
-/// @param user The successfully created user.
-/// @return Returns a successful user result.
-UserResult make_user_success(User user);
-
-/// @brief Creates a user failure.
-/// @param message The error message.
-/// @return Returns a failure result.
-UserResult make_user_failure(char *message);
-
-/// @brief Represents a result which may return a collection of users or an error.
-typedef struct
-{
-    bool is_success;
-    union
-    {
-        Users users;
-        Error error;
-    };
-} UsersResult;
-
-/// @brief Creates a users success.
-/// @param users The successfully created users.
-/// @return Returns a successful users result.
-UsersResult make_users_success(Users users);
-
-/// @brief Creates a users failure.
-/// @param message The error message.
-/// @return Returns a failure result.
-UsersResult make_users_failure(char *message);
-
-/// @brief Represents a result which may return a collection of orders or an error.
-typedef struct
-{
-    bool is_success;
-    union
-    {
-        Order order;
-        Error error;
-    };
-} OrderResult;
-
-/// @brief Creates an order success.
-/// @param orders The successfully created order.
-/// @return Returns a successful order result.
-OrderResult make_order_success(Order order);
-
-/// @brief Creates an order failure.
-/// @param message The error message.
-/// @return Returns a failure result.
-OrderResult make_order_failure(char *message);
-
-/// @brief Represents a result which may return a collection of orders or an error.
-typedef struct
-{
-    bool is_success;
-    union
-    {
-        Orders orders;
-        Error error;
-    };
-} OrdersResult;
-
-/// @brief Creates an orders success.
-/// @param orders The successfully created orders.
-/// @return Returns a successful orders result.
-OrdersResult make_orders_success(Orders orders);
-
-/// @brief Creates an orders failure.
-/// @param message The error message.
-/// @return Returns a failure result.
-OrdersResult make_orders_failure(char *message);
+};
 
 bool menu_principal(Database *connection);
 

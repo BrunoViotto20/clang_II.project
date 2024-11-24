@@ -1,25 +1,19 @@
-#include <assert.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 
-#include "utils.h"
 #include "database.h"
+#include "lanchonete.h"
+#include "result.h"
 
-// File paths
 #define USERS_PATH "database/users.txt"
 #define ORDERS_PATH "database/orders.txt"
-
 #define USERS_INDEX_PATH "database/users_index.txt"
 
-#define FIELD_SEPARATOR ';'
-#define RECORD_SEPARATOR '\n'
 #define LINE_BUFFER_LENGTH 256
-#define LONG_MAX_LENGTH 19
 
 struct Database
 {
@@ -37,20 +31,6 @@ UnitResult write_order(Database *db, Order *order);
 UnitResult ensure_directory_exists(char *directory_path);
 
 I64Result get_next_user_id(Database *db);
-
-DatabaseResult make_database_success(Database *database)
-{
-    DatabaseResult result = {true, {database}};
-    return result;
-}
-
-DatabaseResult make_database_failure(char *message)
-{
-    Error error = {message};
-    DatabaseResult result = {false};
-    result.error = error;
-    return result;
-}
 
 DatabaseResult db_open()
 {
@@ -252,7 +232,7 @@ UnitResult db_insert_user(Database *db, User *user)
     return make_unit_success();
 }
 
-UnitResult db_disable_user(Database *db, char cpf[CPF_LENGTH])
+UnitResult db_disable_user(Database *db, char cpf[CPF_LENGTH + 1])
 {
     rewind(db->users);
 
@@ -315,7 +295,7 @@ UnitResult db_disable_user(Database *db, char cpf[CPF_LENGTH])
     }
 }
 
-UnitResult db_delete_user(Database *db, char cpf[CPF_LENGTH])
+UnitResult db_delete_user(Database *db, char cpf[CPF_LENGTH + 1])
 {
     rewind(db->users);
 
