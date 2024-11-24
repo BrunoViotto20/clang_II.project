@@ -38,6 +38,7 @@ bool try_parse_user(char *string, User *user);
 
 void write_separator(FILE *fd);
 bool write_user(Database *db, User *user);
+UnitResult write_order(Database *db, Order *order);
 void write_string(FILE *fd, char *string, int length);
 void write_bool(FILE *fd, bool value);
 
@@ -375,7 +376,39 @@ UnitResult db_delete_user(Database *db, char cpf[CPF_LENGTH])
 }
 
 // Order *db_get_orders(Database *db, User *user);
-// void db_insert_order(Database *db, Order *order);
+
+UnitResult db_insert_order(Database *db, char cpf[CPF_LENGTH + 1], Order *order)
+{
+    fseek(db->orders, 0, SEEK_END);
+
+    int pos = ftell(db->orders);
+    if (pos != 0)
+    {
+        fseek(db->orders, -1, SEEK_END);
+        char last = fgetc(db->orders);
+        if (last != '\n')
+        {
+            fwrite("\n", sizeof(char), 1, db->orders);
+        }
+    }
+
+    UserResult get_user_result = db_get_user(db, cpf);
+    if (!get_user_result.is_success)
+    {
+        return make_unit_failure(get_user_result.error.message);
+    }
+
+    User user = get_user_result.user;
+    order->user_id = user.id;
+
+    UnitResult write_order_result = write_order(db, order);
+    if (!write_order_result.is_success)
+    {
+        return make_unit_failure(write_order_result.error.message);
+    }
+
+    return make_unit_success();
+}
 
 /* Private functions */
 
@@ -526,6 +559,18 @@ bool write_user(Database *db, User *user)
     fflush(fd);
 
     return true;
+}
+
+UnitResult write_order(Database *db, Order *order)
+{
+    fprintf(db->orders, "\"%s\";%lf;\"%s\";%lf;%s\n",
+            order->payment_method.name,
+            order->payment_method.fee,
+            order->product.name,
+            order->product.price,
+            order->product.is_adult ? "true" : "false");
+
+    return make_unit_success();
 }
 
 void write_string(FILE *fd, char *string, int length)

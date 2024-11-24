@@ -6,6 +6,8 @@
 
 #define USER_NAME_LENGTH 64
 #define CPF_LENGTH 11
+#define PRODUCT_NAME_LENGTH 32
+#define PAYMENT_METHOD_NAME_LENGTH 32
 
 typedef struct Database Database;
 
@@ -20,14 +22,14 @@ typedef struct User
 
 typedef struct Product
 {
-    char name[32];
+    char name[PRODUCT_NAME_LENGTH + 1];
     double price;
-    bool adult;
+    bool is_adult;
 } Product;
 
 typedef struct PaymentMethod
 {
-    char name[32];
+    char name[PAYMENT_METHOD_NAME_LENGTH + 1];
     double fee;
 } PaymentMethod;
 
@@ -35,6 +37,7 @@ typedef struct Order
 {
     Product product;
     PaymentMethod payment_method;
+    long user_id;
 } Order;
 
 /// @brief Represents a finite collection of users.

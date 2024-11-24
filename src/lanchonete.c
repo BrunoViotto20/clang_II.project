@@ -186,7 +186,7 @@ Product products_menu(const Product *products, int length, int age)
 
         Product product = products[option - 1];
 
-        if (product.adult && age < 18)
+        if (product.is_adult && age < 18)
         {
             clear_console();
             printf("Venda proibida para menores de 18 anos!\n");
@@ -315,7 +315,7 @@ void delete_user(Database *connection)
 
 void disable_user(Database *connection)
 {
-   char cpf[CPF_LENGTH + 1] = {0};
+    char cpf[CPF_LENGTH + 1] = {0};
     get_cpf(cpf);
 
     UnitResult user_desable_result = db_disable_user(connection, cpf);

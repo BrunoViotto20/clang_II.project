@@ -79,6 +79,6 @@ OrdersResult db_get_orders(Database *db, User *user);
 /// @param user The user to be attributed the order.
 /// @param order The order to be inserted.
 /// @param result The result of the insert order operation.
-UnitResult db_insert_order(Database *db, User *user, Order *order);
+UnitResult db_insert_order(Database *db, char cpf[CPF_LENGTH + 1], Order *order);
 
 #endif
