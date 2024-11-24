@@ -28,20 +28,11 @@ struct Database
     FILE *orders;
 };
 
-char *try_consume_string(char *input, char *buffer, int buffer_length);
-char *try_consume_i64(char *input, long *number);
-char *try_consume_bool(char *buffer, bool *boolean);
-char *try_consume_true(char *buffer);
-char *try_consume_false(char *buffer);
-
 UserResult parse_user(char *string);
 OrderResult parse_order(char *string);
 
-void write_separator(FILE *fd);
 UnitResult write_user(Database *db, User *user);
 UnitResult write_order(Database *db, Order *order);
-void write_string(FILE *fd, char *string, int length);
-void write_bool(FILE *fd, bool value);
 
 UnitResult ensure_directory_exists(char *directory_path);
 
@@ -568,95 +559,6 @@ OrderResult parse_order(char *string)
     return make_order_success(order);
 }
 
-char *try_consume_string(char *input, char *buffer, int buffer_length)
-{
-    if (input[0] != '"')
-    {
-        return NULL;
-    }
-    input++;
-
-    int i;
-    for (i = 0; input[i] != '\0' && i < buffer_length - 1 && (input[i] != '"' || input[i - 1] == '\\'); i++)
-    {
-        buffer[i] = input[i];
-    }
-    buffer[i] = '\0';
-
-    if (input[i] != '"')
-    {
-        return NULL;
-    }
-
-    return input + i + 1;
-}
-
-char *try_consume_i64(char *input, long *number)
-{
-    char buffer[LONG_MAX_LENGTH + 1] = {0};
-
-    int i;
-    for (i = 0; input[i] != '\0' && input[i] != FIELD_SEPARATOR && input[i] != RECORD_SEPARATOR && i < LONG_MAX_LENGTH; i++)
-    {
-        buffer[i] = input[i];
-    }
-    buffer[i] = '\0';
-
-    char *end;
-    *number = strtol(buffer, &end, 10);
-
-    if (buffer == end || *end != '\0')
-    {
-        return NULL;
-    }
-
-    return input + strlen(buffer);
-}
-
-char *try_consume_bool(char *buffer, bool *boolean)
-{
-    if (*buffer == 't')
-    {
-        *boolean = true;
-        return try_consume_true(buffer);
-    }
-
-    if (*buffer == 'f')
-    {
-        *boolean = false;
-        return try_consume_false(buffer);
-    }
-
-    return NULL;
-}
-
-char *try_consume_true(char *buffer)
-{
-    if (buffer[0] != 't' || buffer[1] != 'r' || buffer[2] != 'u' || buffer[3] != 'e')
-    {
-        return NULL;
-    }
-
-    return buffer + 4;
-}
-
-char *try_consume_false(char *buffer)
-{
-    if (buffer[0] != 'f' || buffer[1] != 'a' || buffer[2] != 'l' || buffer[3] != 's' || buffer[4] != 'e')
-    {
-        return NULL;
-    }
-
-    return buffer + 5;
-}
-
-void write_separator(FILE *fd)
-{
-    const char buffer[1] = {FIELD_SEPARATOR};
-    fwrite(buffer, sizeof(char), 1, fd);
-    fflush(fd);
-}
-
 UnitResult write_user(Database *db, User *user)
 {
     fprintf(
@@ -686,30 +588,6 @@ UnitResult write_order(Database *db, Order *order)
     fflush(db->orders);
 
     return make_unit_success();
-}
-
-void write_string(FILE *fd, char *string, int length)
-{
-    const char quote[1] = {'\"'};
-    fwrite(quote, sizeof(char), 1, fd);
-    fwrite(string, sizeof(char), length, fd);
-    fwrite(quote, sizeof(char), 1, fd);
-
-    fflush(fd);
-}
-
-void write_bool(FILE *fd, bool value)
-{
-    if (value)
-    {
-        fwrite("true", sizeof(char), 4, fd);
-    }
-    else
-    {
-        fwrite("false", sizeof(char), 5, fd);
-    }
-
-    fflush(fd);
 }
 
 UnitResult ensure_directory_exists(char *directory_path)
