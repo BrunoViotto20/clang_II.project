@@ -563,12 +563,13 @@ bool write_user(Database *db, User *user)
 
 UnitResult write_order(Database *db, Order *order)
 {
-    fprintf(db->orders, "\"%s\";%lf;\"%s\";%lf;%s\n",
+    fprintf(db->orders, "\"%s\";%lf;\"%s\";%lf;%s;%ld\n",
             order->payment_method.name,
             order->payment_method.fee,
             order->product.name,
             order->product.price,
-            order->product.is_adult ? "true" : "false");
+            order->product.is_adult ? "true" : "false",
+            order->user_id);
 
     return make_unit_success();
 }
