@@ -9,14 +9,14 @@
 
 PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length);
 Product products_menu(const Product *products, int length, int age);
-void get_cpf(char *cpf);
+void get_cpf(char cpf[CPF_LENGTH + 1]);
 int get_age();
 int get_amount();
 void fazer_pedido();
 void cadastrar_usuario(Database *connection);
 void delete_user(Database *connection);
 void disable_user(Database *connection);
-bool is_cpf(char *string);
+bool is_cpf(char string[CPF_LENGTH + 1]);
 
 bool menu_principal(Database *connection)
 {
@@ -91,6 +91,7 @@ void cadastrar_usuario(Database *connection)
         return;
     }
 }
+
 void fazer_pedido()
 {
     const Product products[] = {
@@ -202,7 +203,7 @@ PaymentMethod payment_menu(const PaymentMethod *payment_methods, int length)
     }
 }
 
-void get_cpf(char *cpf)
+void get_cpf(char cpf[CPF_LENGTH + 1])
 {
     while (true)
     {
@@ -223,11 +224,54 @@ void get_cpf(char *cpf)
         break;
     }
 }
-bool is_cpf(char *string)
+
+bool is_cpf(char string[CPF_LENGTH + 1])
 {
+    int soma = 0;
+    for (int i = 0; i < 9; i++)
+    {
+        soma += (10 - i) * (string[i] - '0');
+    }
+
+    int resto = soma % 11;
+    if (resto < 2)
+    {
+        resto = 0;
+    }
+    else
+    {
+        resto = 11 - resto;
+    }
+
+    if (resto != string[9] - '0')
+    {
+        return false;
+    }
+
+    soma = 0;
+    for (int i = 0; i < 10; i++)
+    {
+        soma += (11 - i) * (string[i] - '0');
+    }
+
+    resto = soma % 11;
+    if (resto < 2)
+    {
+        resto = 0;
+    }
+    else
+    {
+        resto = 11 - resto;
+    }
+
+    if (resto != string[10] - '0')
+    {
+        return false;
+    }
 
     return true;
 }
+
 int get_age()
 {
     while (true)
