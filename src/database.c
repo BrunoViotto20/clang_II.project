@@ -38,7 +38,7 @@ bool try_parse_user(char *string, User *user);
 OrderResult parse_order(char *string);
 
 void write_separator(FILE *fd);
-bool write_user(Database *db, User *user);
+UnitResult write_user(Database *db, User *user);
 UnitResult write_order(Database *db, Order *order);
 void write_string(FILE *fd, char *string, int length);
 void write_bool(FILE *fd, bool value);
@@ -250,10 +250,10 @@ UnitResult db_insert_user(Database *db, User *user)
     }
     user->id = nextIdResult.value;
 
-    bool success_insert = write_user(db, user);
-    if (!success_insert)
+    UnitResult write_user_result = write_user(db, user);
+    if (!write_user_result.is_success)
     {
-        return make_unit_failure("Falha ao inserir o usuário\n");
+        return write_user_result;
     }
 
     return make_unit_success();
@@ -656,28 +656,18 @@ void write_separator(FILE *fd)
     fflush(fd);
 }
 
-bool write_user(Database *db, User *user)
+UnitResult write_user(Database *db, User *user)
 {
-    char id_buffer[LONG_MAX_LENGTH + 1] = {0};
-    snprintf(id_buffer, sizeof(id_buffer), "%ld", user->id);
-    int id_length = strlen(id_buffer);
+    fprintf(
+        db->users,
+        "%ld;\"%s\";\"%s\";%d;%s\n",
+        user->id,
+        user->name,
+        user->cpf,
+        user->age,
+        user->active ? "true" : "false");
 
-    int name_length = strlen(user->name);
-
-    FILE *fd = db->users;
-    fwrite(id_buffer, sizeof(char), id_length, fd);
-    write_separator(fd);
-    write_string(fd, user->name, name_length);
-    write_separator(fd);
-    write_string(fd, user->cpf, CPF_LENGTH);
-    write_separator(fd);
-    write_bool(fd, user->active);
-    const char buffer[1] = {RECORD_SEPARATOR};
-    fwrite(buffer, sizeof(char), 1, fd);
-
-    fflush(fd);
-
-    return true;
+    return make_unit_success();
 }
 
 UnitResult write_order(Database *db, Order *order)
