@@ -35,6 +35,7 @@ char *try_consume_true(char *buffer);
 char *try_consume_false(char *buffer);
 
 bool try_parse_user(char *string, User *user);
+OrderResult parse_order(char *string);
 
 void write_separator(FILE *fd);
 bool write_user(Database *db, User *user);
@@ -375,7 +376,79 @@ UnitResult db_delete_user(Database *db, char cpf[CPF_LENGTH])
     }
 }
 
-// Order *db_get_orders(Database *db, User *user);
+OrdersResult db_get_orders(Database *db, char cpf[CPF_LENGTH + 1])
+{
+    rewind(db->orders);
+
+    UserResult get_user_result = db_get_user(db, cpf);
+    if (!get_user_result.is_success)
+    {
+        return make_orders_failure(get_user_result.error.message);
+    }
+    User user = get_user_result.user;
+
+    // Allocates a buffer to retrieve the orders
+    int orders_capacity = 8;
+    long orders_length = 0;
+    Order *orders = (Order *)malloc(sizeof(Order) * orders_capacity);
+
+    // Loop to get all orders
+    char line_buffer[LINE_BUFFER_LENGTH] = {0};
+    while (true)
+    {
+        // Gets a line from the database
+        char *eof = fgets(line_buffer, LINE_BUFFER_LENGTH, db->orders);
+        if (eof == NULL)
+        {
+            break;
+        }
+
+        // Grows the orders buffer if it is full
+        if (orders_capacity == orders_length)
+        {
+            orders_capacity *= 2;
+            Order *temp = (Order *)realloc(orders, sizeof(Order) * orders_capacity);
+            if (temp == NULL)
+            {
+                free(orders);
+                return make_orders_failure("ERRO: Sem memória para realocar");
+            }
+            orders = temp;
+        }
+
+        // Tries to parse the user from the retrieved line and store it into the array
+        OrderResult order_result = parse_order(line_buffer);
+        if (!order_result.is_success)
+        {
+            free(orders);
+            return make_orders_failure(order_result.error.message);
+        }
+        Order order = order_result.order;
+
+        if (order.user_id != user.id)
+        {
+            continue;
+        }
+
+        orders[orders_length] = order;
+        orders_length++;
+    }
+
+    // Shrinks the user buffer to its exact length
+    if (orders_capacity != orders_length)
+    {
+        Order *temp = (Order *)realloc(orders, sizeof(Order) * orders_length);
+        if (orders == NULL)
+        {
+            free(orders);
+            return make_orders_failure("ERRO: Sem memória para realocar");
+        }
+        orders = temp;
+    }
+
+    Orders ordrs = {orders, orders_length};
+    return make_orders_success(ordrs);
+}
 
 UnitResult db_insert_order(Database *db, char cpf[CPF_LENGTH + 1], Order *order)
 {
@@ -446,6 +519,42 @@ bool try_parse_user(char *string, User *user)
     }
 
     return true;
+}
+
+OrderResult parse_order(char *string)
+{
+    char is_adult_buffer[6];
+
+    Order order;
+    int matches = sscanf(
+        string,
+        "\"%[^\"]\";%lf;\"%[^\"]\";%lf;%[^;];%ld",
+        order.payment_method.name,
+        &order.payment_method.fee,
+        order.product.name,
+        &order.product.price,
+        is_adult_buffer,
+        &order.user_id);
+
+    if (matches != 6)
+    {
+        return make_order_failure("ERRO: Banco de dados corrompido");
+    }
+
+    if (strcmp(is_adult_buffer, "true") == 0)
+    {
+        order.product.is_adult = true;
+    }
+    else if (strcmp(is_adult_buffer, "false") == 0)
+    {
+        order.product.is_adult = false;
+    }
+    else
+    {
+        return make_order_failure("ERRO: Banco de dados corrompido");
+    }
+
+    return make_order_success(order);
 }
 
 char *try_consume_string(char *input, char *buffer, int buffer_length)

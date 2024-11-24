@@ -45,6 +45,20 @@ UsersResult make_users_failure(char *message)
     return result;
 }
 
+OrderResult make_order_success(Order order)
+{
+    OrderResult result = {true, {order}};
+    return result;
+}
+
+OrderResult make_order_failure(char *message)
+{
+    Error error = {message};
+    OrderResult result = {false};
+    result.error = error;
+    return result;
+}
+
 OrdersResult make_orders_success(Orders orders)
 {
     OrdersResult result = {true, {orders}};
@@ -58,6 +72,7 @@ OrdersResult make_orders_failure(char *message)
     result.error = error;
     return result;
 }
+
 bool menu_principal(Database *connection)
 {
     int op;

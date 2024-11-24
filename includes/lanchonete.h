@@ -108,6 +108,27 @@ typedef struct
     bool is_success;
     union
     {
+        Order order;
+        Error error;
+    };
+} OrderResult;
+
+/// @brief Creates an order success.
+/// @param orders The successfully created order.
+/// @return Returns a successful order result.
+OrderResult make_order_success(Order order);
+
+/// @brief Creates an order failure.
+/// @param message The error message.
+/// @return Returns a failure result.
+OrderResult make_order_failure(char *message);
+
+/// @brief Represents a result which may return a collection of orders or an error.
+typedef struct
+{
+    bool is_success;
+    union
+    {
         Orders orders;
         Error error;
     };
