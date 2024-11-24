@@ -28,7 +28,7 @@ bool menu_principal(Database *connection)
     printf("[ 5 ] Listar Usuários\n");
     printf("[ 6 ] Listar Pedidos do Usuário\n");
     printf("[ 7 ] Sair\n");
-    
+
     printf("Digite a opção desejada: ");
     int result = scanf("%d", &op);
     if (result != 1)
@@ -67,7 +67,9 @@ void cadastrar_usuario(Database *connection)
     get_cpf(user.cpf);
     user.age = get_age();
 
-    scanf("%*c");
+    // This scanf clears the stdin buffer
+    int _ = scanf("%*c");
+    (void)_;
 
     printf("Digite o seu nome: ");
     char *buffer = fgets(user.name, USER_NAME_LENGTH + 1, stdin);
@@ -204,7 +206,9 @@ void get_cpf(char *cpf)
 {
     while (true)
     {
-        scanf("%*c");
+        int _ = scanf("%*c");
+        (void)_;
+
         printf("Digite o seu cpf: ");
         char *buffer = fgets(cpf, CPF_LENGTH + 1, stdin);
 
