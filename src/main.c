@@ -17,7 +17,7 @@ int main(void)
     bool exit;
     do
     {
-       exit = menu_principal(connection);
+        exit = menu_principal(connection);
     } while (!exit);
 
     UnitResult close_result = db_close(connection);

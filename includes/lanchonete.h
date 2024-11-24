@@ -6,6 +6,8 @@
 
 #define USER_NAME_LENGTH 64
 #define CPF_LENGTH 11
+#define PRODUCT_NAME_LENGTH 32
+#define PAYMENT_METHOD_NAME_LENGTH 32
 
 typedef struct Database Database;
 
@@ -20,14 +22,14 @@ typedef struct User
 
 typedef struct Product
 {
-    char name[32];
+    char name[PRODUCT_NAME_LENGTH + 1];
     double price;
-    bool adult;
+    bool is_adult;
 } Product;
 
 typedef struct PaymentMethod
 {
-    char name[32];
+    char name[PAYMENT_METHOD_NAME_LENGTH + 1];
     double fee;
 } PaymentMethod;
 
@@ -35,6 +37,7 @@ typedef struct Order
 {
     Product product;
     PaymentMethod payment_method;
+    long user_id;
 } Order;
 
 /// @brief Represents a finite collection of users.
@@ -98,6 +101,27 @@ UsersResult make_users_success(Users users);
 /// @param message The error message.
 /// @return Returns a failure result.
 UsersResult make_users_failure(char *message);
+
+/// @brief Represents a result which may return a collection of orders or an error.
+typedef struct
+{
+    bool is_success;
+    union
+    {
+        Order order;
+        Error error;
+    };
+} OrderResult;
+
+/// @brief Creates an order success.
+/// @param orders The successfully created order.
+/// @return Returns a successful order result.
+OrderResult make_order_success(Order order);
+
+/// @brief Creates an order failure.
+/// @param message The error message.
+/// @return Returns a failure result.
+OrderResult make_order_failure(char *message);
 
 /// @brief Represents a result which may return a collection of orders or an error.
 typedef struct

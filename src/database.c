@@ -34,10 +34,12 @@ char *try_consume_bool(char *buffer, bool *boolean);
 char *try_consume_true(char *buffer);
 char *try_consume_false(char *buffer);
 
-bool try_parse_user(char *string, User *user);
+UserResult parse_user(char *string);
+OrderResult parse_order(char *string);
 
 void write_separator(FILE *fd);
-bool write_user(Database *db, User *user);
+UnitResult write_user(Database *db, User *user);
+UnitResult write_order(Database *db, Order *order);
 void write_string(FILE *fd, char *string, int length);
 void write_bool(FILE *fd, bool value);
 
@@ -125,6 +127,10 @@ UsersResult db_get_users(Database *db)
     int users_capacity = 8;
     long users_length = 0;
     User *users = (User *)malloc(sizeof(User) * users_capacity);
+    if (users == NULL)
+    {
+        return make_users_failure("ERRO: Sem memória para alocar");
+    }
 
     // Loop to get all users
     char line_buffer[LINE_BUFFER_LENGTH] = {0};
@@ -145,24 +151,27 @@ UsersResult db_get_users(Database *db)
             if (temp == NULL)
             {
                 free(users);
-                return make_users_failure("No memory to reallocate");
+                return make_users_failure("ERRO: Sem memória para realocar");
             }
             users = temp;
         }
 
         // Tries to parse the user from the retrieved line and store it into the array
-        bool successful_parse = try_parse_user(line_buffer, users + users_length);
-        users_length++;
-        if (!successful_parse)
+        UserResult parse_user_result = parse_user(line_buffer);
+        if (!parse_user_result.is_success)
         {
             free(users);
-            return make_users_failure("The database is corrupted");
+            return make_users_failure(parse_user_result.error.message);
+        }
+        User user = parse_user_result.user;
+
+        if (!user.active)
+        {
+            continue;
         }
 
-        if (!users[users_length - 1].active)
-        {
-            users_length--;
-        }
+        users[users_length] = user;
+        users_length++;
     }
 
     // Shrinks the user buffer to its exact length
@@ -171,7 +180,8 @@ UsersResult db_get_users(Database *db)
         User *temp = realloc(users, sizeof(User) * users_length);
         if (users == NULL)
         {
-            return make_users_failure("No memory to reallocate");
+            free(users);
+            return make_users_failure("ERRO: Sem memória para realocar");
         }
         users = temp;
     }
@@ -193,12 +203,12 @@ UserResult db_get_user(Database *db, char cpf[CPF_LENGTH + 1])
             return make_user_failure("Nenhum usuário encontrado!");
         }
 
-        User user;
-        bool successful_parse = try_parse_user(buffer, &user);
-        if (!successful_parse)
+        UserResult parse_user_result = parse_user(buffer);
+        if (!parse_user_result.is_success)
         {
-            return make_user_failure("Banco de dados corrompido");
+            return parse_user_result;
         }
+        User user = parse_user_result.user;
 
         if (!user.active)
         {
@@ -242,10 +252,10 @@ UnitResult db_insert_user(Database *db, User *user)
     }
     user->id = nextIdResult.value;
 
-    bool success_insert = write_user(db, user);
-    if (!success_insert)
+    UnitResult write_user_result = write_user(db, user);
+    if (!write_user_result.is_success)
     {
-        return make_unit_failure("Falha ao inserir o usuário\n");
+        return write_user_result;
     }
 
     return make_unit_success();
@@ -265,12 +275,12 @@ UnitResult db_disable_user(Database *db, char cpf[CPF_LENGTH])
             return make_unit_failure("Usuário não encontrado");
         }
 
-        User user;
-        bool successful_parse = try_parse_user(buffer, &user);
-        if (!successful_parse)
+        UserResult parse_user_result = parse_user(buffer);
+        if (!parse_user_result.is_success)
         {
-            return make_unit_failure("Banco de dados corrompido");
+            return make_unit_failure(parse_user_result.error.message);
         }
+        User user = parse_user_result.user;
 
         if (!user.active || strcmp(user.cpf, cpf) != 0)
         {
@@ -290,7 +300,7 @@ UnitResult db_disable_user(Database *db, char cpf[CPF_LENGTH])
         if (read != leftover)
         {
             free(file_buffer);
-            return make_unit_failure("Falha ao atualizar arquivo");
+            return make_unit_failure("ERRO: Falha ao atualizar arquivo");
         }
         fseek(db->users, record_start, SEEK_SET);
 
@@ -306,7 +316,7 @@ UnitResult db_disable_user(Database *db, char cpf[CPF_LENGTH])
 
             if (shrink_result == -1)
             {
-                return make_unit_failure("Falha ao diminuir o tamanho do arquivo");
+                return make_unit_failure("ERRO: Falha ao diminuir o tamanho do arquivo");
             }
         }
 
@@ -328,12 +338,12 @@ UnitResult db_delete_user(Database *db, char cpf[CPF_LENGTH])
             return make_unit_failure("Usuário não encontrado");
         }
 
-        User user;
-        bool successful_parse = try_parse_user(buffer, &user);
-        if (!successful_parse)
+        UserResult parse_user_result = parse_user(buffer);
+        if (!parse_user_result.is_success)
         {
-            return make_unit_failure("Banco de dados corrompido");
+            return make_unit_failure(parse_user_result.error.message);
         }
+        User user = parse_user_result.user;
 
         if (!user.active || strcmp(user.cpf, cpf) != 0)
         {
@@ -374,45 +384,188 @@ UnitResult db_delete_user(Database *db, char cpf[CPF_LENGTH])
     }
 }
 
-// Order *db_get_orders(Database *db, User *user);
-// void db_insert_order(Database *db, Order *order);
+OrdersResult db_get_orders(Database *db, char cpf[CPF_LENGTH + 1])
+{
+    rewind(db->orders);
+
+    UserResult get_user_result = db_get_user(db, cpf);
+    if (!get_user_result.is_success)
+    {
+        return make_orders_failure(get_user_result.error.message);
+    }
+    User user = get_user_result.user;
+
+    // Allocates a buffer to retrieve the orders
+    int orders_capacity = 8;
+    long orders_length = 0;
+    Order *orders = (Order *)malloc(sizeof(Order) * orders_capacity);
+    if (orders == NULL)
+    {
+        return make_orders_failure("ERRO: Sem memória para alocar");
+    }
+
+    // Loop to get all orders
+    char line_buffer[LINE_BUFFER_LENGTH] = {0};
+    while (true)
+    {
+        // Gets a line from the database
+        char *eof = fgets(line_buffer, LINE_BUFFER_LENGTH, db->orders);
+        if (eof == NULL)
+        {
+            break;
+        }
+
+        // Grows the orders buffer if it is full
+        if (orders_capacity == orders_length)
+        {
+            orders_capacity *= 2;
+            Order *temp = (Order *)realloc(orders, sizeof(Order) * orders_capacity);
+            if (temp == NULL)
+            {
+                free(orders);
+                return make_orders_failure("ERRO: Sem memória para realocar");
+            }
+            orders = temp;
+        }
+
+        // Tries to parse the user from the retrieved line and store it into the array
+        OrderResult order_result = parse_order(line_buffer);
+        if (!order_result.is_success)
+        {
+            free(orders);
+            return make_orders_failure(order_result.error.message);
+        }
+        Order order = order_result.order;
+
+        if (order.user_id != user.id)
+        {
+            continue;
+        }
+
+        orders[orders_length] = order;
+        orders_length++;
+    }
+
+    // Shrinks the user buffer to its exact length
+    if (orders_capacity != orders_length)
+    {
+        Order *temp = (Order *)realloc(orders, sizeof(Order) * orders_length);
+        if (orders == NULL)
+        {
+            free(orders);
+            return make_orders_failure("ERRO: Sem memória para realocar");
+        }
+        orders = temp;
+    }
+
+    Orders ordrs = {orders, orders_length};
+    return make_orders_success(ordrs);
+}
+
+UnitResult db_insert_order(Database *db, char cpf[CPF_LENGTH + 1], Order *order)
+{
+    fseek(db->orders, 0, SEEK_END);
+
+    int pos = ftell(db->orders);
+    if (pos != 0)
+    {
+        fseek(db->orders, -1, SEEK_END);
+        char last = fgetc(db->orders);
+        if (last != '\n')
+        {
+            fwrite("\n", sizeof(char), 1, db->orders);
+        }
+    }
+
+    UserResult get_user_result = db_get_user(db, cpf);
+    if (!get_user_result.is_success)
+    {
+        return make_unit_failure(get_user_result.error.message);
+    }
+
+    User user = get_user_result.user;
+    order->user_id = user.id;
+
+    UnitResult write_order_result = write_order(db, order);
+    if (!write_order_result.is_success)
+    {
+        return make_unit_failure(write_order_result.error.message);
+    }
+
+    return make_unit_success();
+}
 
 /* Private functions */
 
-bool try_parse_user(char *string, User *user)
+UserResult parse_user(char *string)
 {
-    // Parses the user id
-    string = try_consume_i64(string, &user->id);
-    if (string == NULL || *string != FIELD_SEPARATOR)
-    {
-        return false;
-    }
-    string++;
+    User user;
+    char is_active_buffer[6];
 
-    // Parses the user name
-    string = try_consume_string(string, user->name, USER_NAME_LENGTH + 1);
-    if (string == NULL || *string != FIELD_SEPARATOR)
-    {
-        return false;
-    }
-    string++;
+    int matches = sscanf(
+        string,
+        "%ld;\"%[^\"]\";\"%[^\"]\";%d;%[^\n]",
+        &user.id,
+        user.name,
+        user.cpf,
+        &user.age,
+        is_active_buffer);
 
-    // Parses the user cpf
-    string = try_consume_string(string, user->cpf, CPF_LENGTH + 1);
-    if (string == NULL || *string != FIELD_SEPARATOR)
+    if (matches != 5)
     {
-        return false;
-    }
-    string++;
-
-    // Parses the user active status
-    string = try_consume_bool(string, &user->active);
-    if (string == NULL || *string != '\n')
-    {
-        return false;
+        return make_user_failure("ERRO: Banco de dados corrompido");
     }
 
-    return true;
+    if (strcmp(is_active_buffer, "true") == 0)
+    {
+        user.active = true;
+    }
+    else if (strcmp(is_active_buffer, "false") == 0)
+    {
+        user.active = false;
+    }
+    else
+    {
+        return make_user_failure("ERRO: Banco de dados corrompido");
+    }
+
+    return make_user_success(user);
+}
+
+OrderResult parse_order(char *string)
+{
+    char is_adult_buffer[6];
+
+    Order order;
+    int matches = sscanf(
+        string,
+        "\"%[^\"]\";%lf;\"%[^\"]\";%lf;%[^;];%ld",
+        order.payment_method.name,
+        &order.payment_method.fee,
+        order.product.name,
+        &order.product.price,
+        is_adult_buffer,
+        &order.user_id);
+
+    if (matches != 6)
+    {
+        return make_order_failure("ERRO: Banco de dados corrompido");
+    }
+
+    if (strcmp(is_adult_buffer, "true") == 0)
+    {
+        order.product.is_adult = true;
+    }
+    else if (strcmp(is_adult_buffer, "false") == 0)
+    {
+        order.product.is_adult = false;
+    }
+    else
+    {
+        return make_order_failure("ERRO: Banco de dados corrompido");
+    }
+
+    return make_order_success(order);
 }
 
 char *try_consume_string(char *input, char *buffer, int buffer_length)
@@ -504,28 +657,35 @@ void write_separator(FILE *fd)
     fflush(fd);
 }
 
-bool write_user(Database *db, User *user)
+UnitResult write_user(Database *db, User *user)
 {
-    char id_buffer[LONG_MAX_LENGTH + 1] = {0};
-    snprintf(id_buffer, sizeof(id_buffer), "%ld", user->id);
-    int id_length = strlen(id_buffer);
+    fprintf(
+        db->users,
+        "%ld;\"%s\";\"%s\";%d;%s\n",
+        user->id,
+        user->name,
+        user->cpf,
+        user->age,
+        user->active ? "true" : "false");
 
-    int name_length = strlen(user->name);
+    fflush(db->users);
 
-    FILE *fd = db->users;
-    fwrite(id_buffer, sizeof(char), id_length, fd);
-    write_separator(fd);
-    write_string(fd, user->name, name_length);
-    write_separator(fd);
-    write_string(fd, user->cpf, CPF_LENGTH);
-    write_separator(fd);
-    write_bool(fd, user->active);
-    const char buffer[1] = {RECORD_SEPARATOR};
-    fwrite(buffer, sizeof(char), 1, fd);
+    return make_unit_success();
+}
 
-    fflush(fd);
+UnitResult write_order(Database *db, Order *order)
+{
+    fprintf(db->orders, "\"%s\";%lf;\"%s\";%lf;%s;%ld\n",
+            order->payment_method.name,
+            order->payment_method.fee,
+            order->product.name,
+            order->product.price,
+            order->product.is_adult ? "true" : "false",
+            order->user_id);
 
-    return true;
+    fflush(db->orders);
+
+    return make_unit_success();
 }
 
 void write_string(FILE *fd, char *string, int length)

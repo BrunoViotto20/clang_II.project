@@ -72,13 +72,13 @@ UnitResult db_delete_user(Database *db, char cpf[CPF_LENGTH]);
 /// @param db The database connection to be used.
 /// @param user The user to get the orders from.
 /// @param result The result of the get orders operation.
-OrdersResult db_get_orders(Database *db, User *user);
+OrdersResult db_get_orders(Database *db, char cpf[CPF_LENGTH + 1]);
 
 /// @brief Inserts an order for the given user.
 /// @param db The database connection to be used.
 /// @param user The user to be attributed the order.
 /// @param order The order to be inserted.
 /// @param result The result of the insert order operation.
-UnitResult db_insert_order(Database *db, User *user, Order *order);
+UnitResult db_insert_order(Database *db, char cpf[CPF_LENGTH + 1], Order *order);
 
 #endif
