@@ -128,6 +128,11 @@ UsersResult db_get_users(Database *db)
     long users_length = 0;
     User *users = (User *)malloc(sizeof(User) * users_capacity);
 
+    if (users == NULL)
+    {
+        return make_users_failure("ERRO: Sem memória para alocar");
+    }
+
     // Loop to get all users
     char line_buffer[LINE_BUFFER_LENGTH] = {0};
     while (true)
@@ -173,6 +178,7 @@ UsersResult db_get_users(Database *db)
         User *temp = realloc(users, sizeof(User) * users_length);
         if (users == NULL)
         {
+            free(users);
             return make_users_failure("No memory to reallocate");
         }
         users = temp;
@@ -391,6 +397,10 @@ OrdersResult db_get_orders(Database *db, char cpf[CPF_LENGTH + 1])
     int orders_capacity = 8;
     long orders_length = 0;
     Order *orders = (Order *)malloc(sizeof(Order) * orders_capacity);
+    if (orders == NULL)
+    {
+        return make_orders_failure("ERRO: Sem memória para alocar");
+    }
 
     // Loop to get all orders
     char line_buffer[LINE_BUFFER_LENGTH] = {0};
