@@ -523,7 +523,7 @@ long sort_user_name(void *buffer, long length)
 
     for (long i = 0; i < length - 1; i++)
     {
-        if (strcmp(array[i].name, pivot.name) > 0)
+        if (strcmp(array[i].name, pivot.name) >= 0)
         {
             continue;
         }

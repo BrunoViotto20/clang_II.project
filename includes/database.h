@@ -10,16 +10,6 @@ struct User;
 /// @brief Represents a connection to the database, required to access and manipulate it.
 typedef struct Database Database;
 
-/// @brief Creates a database success.
-/// @param database The successfully created database.
-/// @return Returns a successful database result.
-struct DatabaseResult make_database_success(Database *database);
-
-/// @brief Creates a database failure.
-/// @param message The error message.
-/// @return Returns a failure result.
-struct DatabaseResult make_database_failure(char *message);
-
 /// @brief Opens a connection to the database.
 /// @param result The result of the database open operation.
 struct DatabaseResult db_open();
