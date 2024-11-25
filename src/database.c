@@ -510,7 +510,8 @@ OrderResult parse_order(char *string)
     Order order;
     int matches = sscanf(
         string,
-        "\"%[^\"]\";%lf;\"%[^\"]\";%lf;%[^;];%ld",
+        "%d;\"%[^\"]\";%lf;\"%[^\"]\";%lf;%[^;];%ld",
+        &order.amount,
         order.payment_method.name,
         &order.payment_method.fee,
         order.product.name,
@@ -518,7 +519,7 @@ OrderResult parse_order(char *string)
         is_adult_buffer,
         &order.user_id);
 
-    if (matches != 6)
+    if (matches != 7)
     {
         return make_order_failure("ERRO: Banco de dados corrompido");
     }
@@ -557,7 +558,8 @@ UnitResult write_user(Database *db, User *user)
 
 UnitResult write_order(Database *db, Order *order)
 {
-    fprintf(db->orders, "\"%s\";%lf;\"%s\";%lf;%s;%ld\n",
+    fprintf(db->orders, "%d;\"%s\";%lf;\"%s\";%lf;%s;%ld\n",
+            order->amount,
             order->payment_method.name,
             order->payment_method.fee,
             order->product.name,

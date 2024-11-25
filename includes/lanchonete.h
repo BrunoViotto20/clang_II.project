@@ -38,6 +38,7 @@ struct PaymentMethod
 
 struct Order
 {
+    int amount;
     Product product;
     PaymentMethod payment_method;
     long user_id;

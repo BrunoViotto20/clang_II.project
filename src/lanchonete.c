@@ -18,12 +18,16 @@ void cadastrar_usuario(Database *connection);
 void delete_user(Database *connection);
 void disable_user(Database *connection);
 void list_users(Database *connection);
+void list_orders(Database *connection);
 bool is_cpf(char string[CPF_LENGTH + 1]);
 long sort_user_age(void *buffer, long length);
 long sort_user_name(void *buffer, long length);
-// void quick_sort(User *users, long length);
+long sort_product_name(void *buffer, long length);
+long sort_product_price(void *buffer, long length);
+long sort_product_amount(void *buffer, long length);
 void quick_sort(void *array, int size, long length, long (*f)(void *, long length));
 void print_user(User user);
+void print_order(Order order);
 
 bool menu_principal(Database *connection)
 {
@@ -62,6 +66,9 @@ bool menu_principal(Database *connection)
         break;
     case 5:
         list_users(connection);
+        break;
+    case 6:
+        list_orders(connection);
         break;
     }
 
@@ -161,6 +168,7 @@ void fazer_pedido(Database *connection)
     }
 
     Order order = {
+        amount,
         product,
         payment_method,
         user.id};
@@ -233,6 +241,60 @@ void list_users(Database *connection)
     }
 
     free(users.values);
+    wait_key_press();
+}
+
+void list_orders(Database *connection)
+{
+    char cpf[CPF_LENGTH + 1] = {0};
+    get_cpf(cpf);
+
+    OrdersResult get_orders_result = db_get_orders(connection, cpf);
+    if (!get_orders_result.is_success)
+    {
+        perror(get_orders_result.error.message);
+        return;
+    }
+    Orders orders = get_orders_result.orders;
+
+    printf("[ 1 ] Produto\n");
+    printf("[ 2 ] Preço\n");
+    printf("[ 3 ] Quantidade\n");
+    printf("Escolha o método de ordenação: ");
+    int option;
+    int matches = scanf("%d", &option);
+    if (matches != 1)
+    {
+        free(orders.values);
+        printf("Método de ordenação inválido! Tente novamente");
+        return;
+    }
+
+    switch (option)
+    {
+    case 1:
+        quick_sort(orders.values, sizeof(Order), orders.length, sort_product_name);
+        break;
+    case 2:
+        quick_sort(orders.values, sizeof(Order), orders.length, sort_product_price);
+        break;
+    case 3:
+        quick_sort(orders.values, sizeof(Order), orders.length, sort_product_amount);
+        break;
+    default:
+        printf("Método de ordenação inválido!");
+        break;
+    }
+
+    printf("\n");
+    for (int i = 0; i < orders.length; i++)
+    {
+        printf("CLIENTE %d\n", i + 1);
+        print_order(orders.values[i]);
+        printf("\n");
+    }
+
+    free(orders.values);
     wait_key_press();
 }
 
@@ -503,18 +565,92 @@ long sort_user_age(void *buffer, long length)
     return low;
 }
 
-void quick_sort(void *array, int size, long length, long (*f)(void *, long length))
+long sort_product_amount(void *buffer, long length)
+{
+    Order *array = (Order *)buffer;
+    Order pivot = array[length - 1];
+    long low = 0;
+
+    for (long i = 0; i < length - 1; i++)
+    {
+        if (array[i].amount >= pivot.amount)
+        {
+            continue;
+        }
+
+        Order temp = array[i];
+        array[i] = array[low];
+        array[low] = temp;
+        low++;
+    }
+
+    Order temp = array[low];
+    array[low] = pivot;
+    array[length - 1] = temp;
+    return low;
+}
+
+long sort_product_price(void *buffer, long length)
+{
+    Order *array = (Order *)buffer;
+    Order pivot = array[length - 1];
+    long low = 0;
+
+    for (long i = 0; i < length - 1; i++)
+    {
+        if (array[i].product.price >= pivot.product.price)
+        {
+            continue;
+        }
+
+        Order temp = array[i];
+        array[i] = array[low];
+        array[low] = temp;
+        low++;
+    }
+
+    Order temp = array[low];
+    array[low] = pivot;
+    array[length - 1] = temp;
+    return low;
+}
+
+long sort_product_name(void *buffer, long length)
+{
+    Order *array = (Order *)buffer;
+    Order pivot = array[length - 1];
+    long low = 0;
+
+    for (long i = 0; i < length - 1; i++)
+    {
+        if (strcmp(array[i].product.name, pivot.product.name) >= 0)
+        {
+            continue;
+        }
+
+        Order temp = array[i];
+        array[i] = array[low];
+        array[low] = temp;
+        low++;
+    }
+
+    Order temp = array[low];
+    array[low] = pivot;
+    array[length - 1] = temp;
+    return low;
+}
+
+void quick_sort(void *array, int size, long length, long (*partition_sort)(void *, long length))
 {
     if (length <= 1)
     {
         return;
     }
 
-    long index = f(array, length);
-    // long index = partition(array, length);
+    long index = partition_sort(array, length);
 
-    quick_sort(array, size, index, f);
-    quick_sort(array + (index + 1) * size, size, length - index - 1, f);
+    quick_sort(array, size, index, partition_sort);
+    quick_sort(array + (index + 1) * size, size, length - index - 1, partition_sort);
 }
 
 void print_user(User user)
@@ -522,4 +658,14 @@ void print_user(User user)
     printf("Nome: %s\n", user.name);
     printf("CPF: %s\n", user.cpf);
     printf("Idade: %d\n", user.age);
+}
+
+void print_order(Order order)
+{
+    printf("Produto: %s\n", order.product.name);
+    printf("Quantidade: %d\n", order.amount);
+    printf("Preço: %lf\n", order.product.price);
+    printf("Maior idade? %s\n", order.product.is_adult ? "sim" : "não");
+    printf("Pagamento: %s\n", order.payment_method.name);
+    printf("Taxa: %lf\n", order.payment_method.fee * 100);
 }
